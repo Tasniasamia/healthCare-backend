@@ -51,8 +51,10 @@ export const AnyNull = runtime.AnyNull
 
 
 export const ModelName = {
+  doctor: 'doctor',
   patient: 'patient',
   Speciality: 'Speciality',
+  doctorSpeciality: 'doctorSpeciality',
   User: 'User',
   Session: 'Session',
   Account: 'Account',
@@ -73,6 +75,29 @@ export const TransactionIsolationLevel = runtime.makeStrictEnum({
 } as const)
 
 export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof typeof TransactionIsolationLevel]
+
+
+export const DoctorScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  name: 'name',
+  email: 'email',
+  profilePhoto: 'profilePhoto',
+  contactNumber: 'contactNumber',
+  address: 'address',
+  registrationNumber: 'registrationNumber',
+  experience: 'experience',
+  gender: 'gender',
+  appointmentFee: 'appointmentFee',
+  qualification: 'qualification',
+  currentWorkingPlace: 'currentWorkingPlace',
+  designation: 'designation',
+  avaerageRating: 'avaerageRating',
+  createAt: 'createAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type DoctorScalarFieldEnum = (typeof DoctorScalarFieldEnum)[keyof typeof DoctorScalarFieldEnum]
 
 
 export const PatientScalarFieldEnum = {
@@ -104,6 +129,17 @@ export const SpecialityScalarFieldEnum = {
 } as const
 
 export type SpecialityScalarFieldEnum = (typeof SpecialityScalarFieldEnum)[keyof typeof SpecialityScalarFieldEnum]
+
+
+export const DoctorSpecialityScalarFieldEnum = {
+  id: 'id',
+  specialityId: 'specialityId',
+  doctorId: 'doctorId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type DoctorSpecialityScalarFieldEnum = (typeof DoctorSpecialityScalarFieldEnum)[keyof typeof DoctorSpecialityScalarFieldEnum]
 
 
 export const UserScalarFieldEnum = {

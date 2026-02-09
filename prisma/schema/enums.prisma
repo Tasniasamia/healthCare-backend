@@ -9,3 +9,9 @@ enum Role {
     BLOCKED
     DELETED
 }
+
+enum Gender {
+    FEMALE
+    MALE
+    OTHER
+}
