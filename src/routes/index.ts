@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { specialityRoute } from "../modules/speciality/speciality.route";
+import { AuthRoutes } from "../modules/auth/auth.route";
 
 
 
@@ -9,6 +10,10 @@ const allRoutes=[
     {
         path:'/speciality',
         handler:specialityRoute
+    },
+    {
+        path:'/auth',
+        handler:AuthRoutes
     }
 
 ]
