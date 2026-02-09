@@ -1,1 +1,0 @@
-const createSpeciality=async(payload:)

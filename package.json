@@ -7,13 +7,11 @@
     "lint": "eslint \"src/**/*.ts\"",
     "dev": "npx tsx watch src/server.ts",
     "build": "prisma generate && tsup src/index.ts --format esm --platform node --target node20 --outDir api --external pg-native",
-    "migrate":"prisma migrate dev",
-    "generate":"prisma generate",
-    "pull":"prisma db pull",
-    "push":"prisma db push",
-    "studio":"prisma studio"
-
-
+    "migrate": "prisma migrate dev",
+    "generate": "prisma generate",
+    "pull": "prisma db pull",
+    "push": "prisma db push",
+    "studio": "prisma studio"
   },
   "keywords": [],
   "author": "",
@@ -23,6 +21,7 @@
     "@prisma/adapter-pg": "^7.3.0",
     "@prisma/client": "^7.3.0",
     "@types/express": "^5.0.6",
+    "cors": "^2.8.6",
     "dotenv": "^17.2.4",
     "express": "^5.2.1",
     "nodemon": "^3.1.11",
@@ -32,6 +31,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
+    "@types/cors": "^2.8.19",
     "@types/node": "^25.2.2",
     "eslint": "^9.39.2",
     "prisma": "^7.3.0",
