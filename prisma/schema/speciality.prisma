@@ -1,0 +1,13 @@
+model Speciality {
+  id        Int      @id @default(autoincrement())
+  title     String
+  icon      String?
+  description String?
+  deletedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt 
+  isDeleted Boolean @default(false)
+@@index([title],name:"idx_speciality_title")
+@@index([isDeleted],name:"idx_speciality_isDeleted")
+@@map("speciality")
+}
