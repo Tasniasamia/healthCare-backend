@@ -384,6 +384,7 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 
 
 export const ModelName = {
+  patient: 'patient',
   Speciality: 'Speciality',
   User: 'User',
   Session: 'Session',
@@ -404,10 +405,84 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "speciality" | "user" | "session" | "account" | "verification"
+    modelProps: "patient" | "speciality" | "user" | "session" | "account" | "verification"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
+    patient: {
+      payload: Prisma.$patientPayload<ExtArgs>
+      fields: Prisma.patientFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.patientFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$patientPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.patientFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$patientPayload>
+        }
+        findFirst: {
+          args: Prisma.patientFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$patientPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.patientFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$patientPayload>
+        }
+        findMany: {
+          args: Prisma.patientFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$patientPayload>[]
+        }
+        create: {
+          args: Prisma.patientCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$patientPayload>
+        }
+        createMany: {
+          args: Prisma.patientCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.patientCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$patientPayload>[]
+        }
+        delete: {
+          args: Prisma.patientDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$patientPayload>
+        }
+        update: {
+          args: Prisma.patientUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$patientPayload>
+        }
+        deleteMany: {
+          args: Prisma.patientDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.patientUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.patientUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$patientPayload>[]
+        }
+        upsert: {
+          args: Prisma.patientUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$patientPayload>
+        }
+        aggregate: {
+          args: Prisma.PatientAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregatePatient>
+        }
+        groupBy: {
+          args: Prisma.patientGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PatientGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.patientCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PatientCountAggregateOutputType> | number
+        }
+      }
+    }
     Speciality: {
       payload: Prisma.$SpecialityPayload<ExtArgs>
       fields: Prisma.SpecialityFieldRefs
@@ -817,6 +892,23 @@ export const TransactionIsolationLevel = runtime.makeStrictEnum({
 export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof typeof TransactionIsolationLevel]
 
 
+export const PatientScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  name: 'name',
+  email: 'email',
+  profilePhoto: 'profilePhoto',
+  contactNumber: 'contactNumber',
+  address: 'address',
+  isDeleted: 'isDeleted',
+  deletedAt: 'deletedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PatientScalarFieldEnum = (typeof PatientScalarFieldEnum)[keyof typeof PatientScalarFieldEnum]
+
+
 export const SpecialityScalarFieldEnum = {
   id: 'id',
   title: 'title',
@@ -953,6 +1045,13 @@ export type ListStringFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaMod
 
 
 /**
+ * Reference to a field of type 'Boolean'
+ */
+export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
+    
+
+
+/**
  * Reference to a field of type 'DateTime'
  */
 export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime'>
@@ -963,13 +1062,6 @@ export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel
  * Reference to a field of type 'DateTime[]'
  */
 export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime[]'>
-    
-
-
-/**
- * Reference to a field of type 'Boolean'
- */
-export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
     
 
 
@@ -1109,6 +1201,7 @@ export type PrismaClientOptions = ({
   comments?: runtime.SqlCommenterPlugin[]
 }
 export type GlobalOmitConfig = {
+  patient?: Prisma.patientOmit
   speciality?: Prisma.SpecialityOmit
   user?: Prisma.UserOmit
   session?: Prisma.SessionOmit

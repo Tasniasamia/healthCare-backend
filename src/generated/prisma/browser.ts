@@ -18,6 +18,11 @@ export { Prisma }
 export * as $Enums from './enums'
 export * from './enums';
 /**
+ * Model patient
+ * 
+ */
+export type patient = Prisma.patientModel
+/**
  * Model Speciality
  * 
  */

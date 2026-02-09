@@ -1,6 +1,8 @@
 import  express ,{type Application, type Request, type Response} from "express";
 import cors from 'cors';
 import route from "./app/routes";
+import { globalErrorHandler } from "./app/middleware/globalErrorHandler";
+import { NotfoundHandler } from "./app/middleware/notFoundHandler";
 
 const app:Application=express();
 app.use(express.json());
@@ -36,7 +38,8 @@ const allowedOrigins = [
   );
   
 app.use('/api/v1',route);
-
+app.use(globalErrorHandler);
+app.use(NotfoundHandler);
 app.get('/',(req:Request,res:Response)=>{
     res.send("Hello World");
 })

@@ -2,8 +2,10 @@
 
 
 
+
+
 model User {
-  id            String    @id
+  id            String    @id 
   name          String
   email         String
   emailVerified Boolean   @default(false)
@@ -17,7 +19,7 @@ model User {
   updatedAt     DateTime  @updatedAt
   sessions      Session[]
   accounts      Account[]
-
+  patient      patient?
   @@unique([email])
   @@map("user")
 }

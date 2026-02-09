@@ -8,6 +8,7 @@
  *
  * 🟢 You can import this file directly.
  */
+export type * from './models/patient'
 export type * from './models/Speciality'
 export type * from './models/User'
 export type * from './models/Session'

@@ -3,6 +3,7 @@ import type { Request, Response } from "express";
 import { catchAsyncHandler } from "../../utils/catchAsyncHandler";
 import { AuthService } from "./auth.service";
 import { sendResponse } from "../../utils/sendResponse";
+import status from "http-status";
 
 const registerPatient = catchAsyncHandler(
     async (req: Request, res: Response) => {
@@ -13,7 +14,7 @@ const registerPatient = catchAsyncHandler(
         const result = await AuthService.registerPatient(payload);
 
         sendResponse(res, {
-            httpStatusCode: 201,
+            httpStatusCode: status.CREATED,
             success: true,
             message: "Patient registered successfully",
             data: result,
@@ -26,7 +27,7 @@ const loginUser = catchAsyncHandler(
         const payload = req.body;
         const result = await AuthService.loginUser(payload);
         sendResponse(res, {
-            httpStatusCode: 200,
+            httpStatusCode: status.OK,
             success: true,
             message: "User logged in successfully",
             data: result,

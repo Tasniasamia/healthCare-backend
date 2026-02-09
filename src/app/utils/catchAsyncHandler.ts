@@ -7,12 +7,7 @@ export const catchAsyncHandler=(functionHandler:RequestHandler)=>{
           await functionHandler(req,res,next);
         }
         catch(error:any){
-           await res.status(500).json({
-                success:false,
-                message:"Failed to create speciality",
-                error:error
-            })
-            
+          next(error);
         }
     }
 
