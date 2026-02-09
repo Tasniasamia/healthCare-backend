@@ -1,6 +1,6 @@
 import  express ,{type Application, type Request, type Response} from "express";
-import route from "./routes";
 import cors from 'cors';
+import route from "./app/routes";
 
 const app:Application=express();
 app.use(express.json());
