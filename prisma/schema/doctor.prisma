@@ -6,9 +6,9 @@ model doctor {
   name                String
   email               String
   profilePhoto        String?
-  contactNumber       String?
+  contactNumber       String
   address             String?
-  registrationNumber  String?
+  registrationNumber  String
   experience          Int      @default(0)
   gender              Gender
   appointmentFee      Float

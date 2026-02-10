@@ -1,8 +1,8 @@
 
 import type { Request, Response } from "express";
-import { catchAsyncHandler } from "../../utils/catchAsyncHandler";
+import { catchAsyncHandler } from "../../shared/catchAsyncHandler";
 import { AuthService } from "./auth.service";
-import { sendResponse } from "../../utils/sendResponse";
+import { sendResponse } from "../../shared/sendResponse";
 import status from "http-status";
 
 const registerPatient = catchAsyncHandler(

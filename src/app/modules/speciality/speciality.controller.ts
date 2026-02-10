@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import { specialityService } from "./speciality.service";
-import { catchAsyncHandler } from "../../utils/catchAsyncHandler";
-import { sendResponse } from "../../utils/sendResponse";
+import { catchAsyncHandler } from "../../shared/catchAsyncHandler";
+import { sendResponse } from "../../shared/sendResponse";
 
  const createSpeciality= (catchAsyncHandler(async(req:Request,res:Response,next:NextFunction)=>{
   const data=await req.body;
