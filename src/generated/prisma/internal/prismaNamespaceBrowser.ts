@@ -109,6 +109,8 @@ export const DoctorScalarFieldEnum = {
   currentWorkingPlace: 'currentWorkingPlace',
   designation: 'designation',
   avaerageRating: 'avaerageRating',
+  isDeleted: 'isDeleted',
+  deletedAt: 'deletedAt',
   createAt: 'createAt',
   updatedAt: 'updatedAt'
 } as const

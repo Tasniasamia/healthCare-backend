@@ -16,6 +16,8 @@ model doctor {
   currentWorkingPlace String
   designation          String
   avaerageRating      Float  @default(0.0)
+  isDeleted           Boolean @default(false)
+  deletedAt           DateTime?
   createAt            DateTime @default(now())
   updatedAt           DateTime @updatedAt
   specialities        doctorSpeciality[]
