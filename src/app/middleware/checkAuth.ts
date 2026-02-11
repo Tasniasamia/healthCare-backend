@@ -10,35 +10,55 @@ import type { JwtPayload } from "jsonwebtoken";
 
 export const checkAuth=(...AuthRole:Role[])=>{
     return async (req:Request,res:Response,next:NextFunction)=>{
+        try{
         const sessionToken=await cookieUtils.getCookie(req,'better-auth.session_token');
         console.log("sessionToken",sessionToken);
         if(!sessionToken){
-            throw new AppError(status.UNAUTHORIZED,'You are not authorized')
+            throw new Error('Unauthorized access! No session token provided.');
         }
-        const sessionExist=await prisma.session.findFirst({
+        if(sessionToken){
+        const sessionExistUser=await prisma.session.findFirst({
           where:{token:sessionToken,expiresAt:{gt:new Date()}},
           include:{user:true}
           
         })
-        if(sessionExist?.user){
-            let expireTime=new Date(sessionExist?.expiresAt).getTime();
-            let createdTime=new Date(sessionExist?.createdAt).getTime();
-            let totalTime=(expireTime-createdTime);
-            let remainTime=(expireTime-Date.now());
-            if(!remainTime){
-                throw new AppError(status.UNAUTHORIZED,'Your session time has been expired')
+        if(sessionExistUser && sessionExistUser?.user){
+
+            let expireTime=new Date(sessionExistUser?.expiresAt).getTime();
+            let createTime=new Date(sessionExistUser?.createdAt).getTime();
+            let now=new Date().getTime();
+
+            let sessionLifeTime=(expireTime-createTime);
+            let sessionRemainTime=(expireTime-now);
+            let percentageTime=(sessionRemainTime/sessionLifeTime)*100;
+
+            if(percentageTime<20){
+                res.setHeader('X-Session-Refresh','true');
+                res.setHeader('X-Session-Expires-At',expireTime.toString());
+                res.setHeader('X-Session-Remaining-Time',sessionRemainTime.toString());
+
+
+            }
+            if(!sessionRemainTime){
+                throw new AppError(status.UNAUTHORIZED,'Session time has been expired')
             }
 
-            if(sessionExist?.user?.status === (UserStatus.BLOCKED|| UserStatus.DELETED)){
-                throw new AppError(status.UNAUTHORIZED,'You are not an active user. you are unathorized user')
+            if(sessionExistUser?.user?.status === (UserStatus.BLOCKED|| UserStatus.DELETED)){
+                throw new AppError(status.UNAUTHORIZED,'Unauthorized Access. User is not active')
             }
-            if(sessionExist?.user?.isDeleted){
-                throw new AppError(status.UNAUTHORIZED,'You are deleted User')
+            if(sessionExistUser?.user?.isDeleted){
+                throw new AppError(status.UNAUTHORIZED,'Unauthorized Access. User is deleted')
+            }
+            if(AuthRole.length>0 && !AuthRole.includes(sessionExistUser?.user?.role)){
+                throw new AppError(status.FORBIDDEN,'Forbidden User. You do not have permission to access this resources')
             }
 
         }
-
+    }
         const accessToken=await cookieUtils.getCookie(req,'accessToken');
+        if(!accessToken){
+            throw new AppError(status.UNAUTHORIZED,'Unauthorized Access. No access token provided here')
+        }
         const accessTokenPayload= await jwtUtils.verifyToken(accessToken,envVars.ACCESS_TOKEN_SECRET);
        if(!accessTokenPayload?.success){
        throw new AppError(status.UNAUTHORIZED,accessTokenPayload?.message)
@@ -46,5 +66,9 @@ export const checkAuth=(...AuthRole:Role[])=>{
        req.user=accessTokenPayload.data as JwtPayload;
 
         next();
+    }
+    catch(error:any){
+        next(error);
+    }
     }
 }
