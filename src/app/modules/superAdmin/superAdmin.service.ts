@@ -1,12 +1,12 @@
 import status from "http-status";
 import { UserStatus } from "../../../generated/prisma/enums";
-import type { adminWhereInput } from "../../../generated/prisma/models";
 import { AppError } from "../../errorHelplers/appError";
 import { prisma } from "../../lib/prisma";
-import type { IAdminFilterRequest,  TUpdateAdminPayload } from "./admin.interface";
+import type { superAdminWhereInput } from "../../../generated/prisma/models";
+import type { ISuperAdminFilterRequest, TUpdateSuperAdminPayload } from "./superAdmin.interface";
 
-const getAllAdmin = async (searchQuery: IAdminFilterRequest) => {
-  const anyConditions: adminWhereInput[] = [];
+const getAllSuperAdmin = async (searchQuery: ISuperAdminFilterRequest) => {
+  const anyConditions: superAdminWhereInput[] = [];
   if (searchQuery?.email) {
     anyConditions.push({ email: searchQuery?.email });
   }
@@ -14,7 +14,7 @@ const getAllAdmin = async (searchQuery: IAdminFilterRequest) => {
   if (searchQuery?.isDeleted) {
     anyConditions.push({ isDeleted: searchQuery?.isDeleted });
   }
-  const admin = await prisma.admin.findMany({
+  const superAdmin = await prisma.superAdmin.findMany({
     where: { AND: anyConditions },
     orderBy: {
       createdAt: "desc",
@@ -41,10 +41,10 @@ const getAllAdmin = async (searchQuery: IAdminFilterRequest) => {
 
   // Transform specialties (flatten structure)
 
-  return admin;
+  return superAdmin;
 };
-const getAdminById = async (id: string) => {
-  const admin = await prisma.admin.findFirst({
+const getSuperAdminById = async (id: string) => {
+  const superAdmin = await prisma.superAdmin.findFirst({
     where: { id: id, isDeleted: false },
     orderBy: {
       createdAt: "desc",
@@ -69,10 +69,10 @@ const getAdminById = async (id: string) => {
     },
   });
 
-  return admin;
+  return superAdmin;
 };
-const updateAdmin=async(id:string,payload:TUpdateAdminPayload)=>{
-    const existAdmin = await prisma.admin.findFirst({
+const updateSuperAdmin=async(id:string,payload:TUpdateSuperAdminPayload)=>{
+    const existSuperAdmin = await prisma.superAdmin.findFirst({
         where: {
           id,
           isDeleted: false,
@@ -84,21 +84,21 @@ const updateAdmin=async(id:string,payload:TUpdateAdminPayload)=>{
           user: true,
         },
       });
-    if (!existAdmin) {
+    if (!existSuperAdmin) {
         throw new AppError(
           status.FORBIDDEN,
-          "Forbidden User. Admin doesn't exist here"
+          "Forbidden User. Super Admin doesn't exist here"
         );
        
       }
- const updateAdmin=await prisma.admin.update({
+ const updateSuperAdmin=await prisma.superAdmin.update({
         where:{
             id:id
         },
         data:payload
     });
     try{
-     if(updateAdmin?.id){
+     if(updateSuperAdmin?.id){
         const result=await prisma.$transaction(async(tx)=>{
             const userUpdateData: any = {};
 
@@ -113,7 +113,7 @@ const updateAdmin=async(id:string,payload:TUpdateAdminPayload)=>{
               data: userUpdateData,
             });     
         })
-        return {...updateAdmin,user:{...result}};
+        return {...updateSuperAdmin,user:{...result}};
    
     }
 
@@ -123,8 +123,8 @@ const updateAdmin=async(id:string,payload:TUpdateAdminPayload)=>{
     }
 }
 
-const deleteAdmin = async (id: string) => {
-    const existAdmin = await prisma.admin.findFirst({
+const deleteSuperAdmin = async (id: string) => {
+    const existSuperAdmin = await prisma.superAdmin.findFirst({
       where: {
         id: id,
         isDeleted: false,
@@ -132,28 +132,28 @@ const deleteAdmin = async (id: string) => {
       },
       include: { user: true },
     });
-    if (!existAdmin) {
+    if (!existSuperAdmin) {
       throw new AppError(
         status.FORBIDDEN,
-        "Forbidden User. Admin doesn't exist here"
+        "Forbidden User. Super Admin doesn't exist here"
       );
     }
-    const softDeleteAdmin = await prisma.admin.update({
+    const softDeleteSuperAdmin = await prisma.superAdmin.update({
       where: { id: id },
       data: { isDeleted: true, deletedAt: new Date() },
     });
     try {
-      if (softDeleteAdmin?.id) {
+      if (softDeleteSuperAdmin?.id) {
         const result = await prisma.$transaction(async (tx) => {
           return await tx.user.update({
-            where: { id: softDeleteAdmin?.userId },
+            where: { id: softDeleteSuperAdmin?.userId },
             data: { isDeleted: true, deletedAt: new Date() },
           });
         });
-        return { ...result, user: { ...softDeleteAdmin } };
+        return { ...result, user: { ...softDeleteSuperAdmin } };
       }
     } catch (error: any) {
-      await prisma.admin.update({
+      await prisma.superAdmin.update({
         where: { id: id },
         data: { isDeleted: true },
       });
@@ -161,4 +161,4 @@ const deleteAdmin = async (id: string) => {
     }
   };
 
-export const adminService = { getAllAdmin, getAdminById ,updateAdmin,deleteAdmin};
+export const superAdminService = { getAllSuperAdmin, getSuperAdminById ,updateSuperAdmin,deleteSuperAdmin};
