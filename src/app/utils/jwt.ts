@@ -4,13 +4,18 @@ const createToken=(payload:JwtPayload,jwtSecret:string,options:SignOptions)=>{
     return  jwt.sign(payload, jwtSecret, options);
 }
 
-const verifyToken=(jwtSecret:string,token:string)=>{
+const verifyToken=(token:string,jwtSecret:string)=>{
+  
     try{
         const decoded= jwt.verify(token, jwtSecret);
-        return decoded;
+        return {success:true,data:decoded};
     }
     catch(error:any){
-        throw error;
+        return {
+            success:false,
+            message:error?.message
+
+        }
     }
 }
 
