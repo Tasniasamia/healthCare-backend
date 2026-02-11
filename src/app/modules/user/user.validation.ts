@@ -22,7 +22,7 @@ const CreateDoctorSchema = z.object({
       .optional(),
 
     registrationNumber: z.string("Registration number is required"),
-    profilePhoto: z.url(),
+    profilePhoto: z.url("Invalid URL format").optional(),
     experience: z
       .int()
       .nonnegative("Experience years not can be negativ")
@@ -37,4 +37,31 @@ const CreateDoctorSchema = z.object({
   specialities:z.array(z.uuid(),'').min(1,'minimum one specialities is required')
 });
 
-export const userValidationSchema = { CreateDoctorSchema };
+const CreateAdminSchema=z.object({
+  password: z
+  .string("Password is required")
+  .min(8, "Minimum lenth will be 8 characters")
+  .max(20, "Maximum length can be 20 characters"),
+  admin:z.object({
+    name: z.string().min(1, "Name is required"),
+    email: z.email("Invalid email format"),
+    profilePhoto: z.url("Invalid URL format").optional(),
+    contactNumber: z.string().min(1, "Contact number is required"),
+  })
+});
+
+const CreateSuperAdminSchema=z.object({
+  password: z
+  .string("Password is required")
+  .min(8, "Minimum lenth will be 8 characters")
+  .max(20, "Maximum length can be 20 characters"),
+  superAdmin:z.object({
+    name: z.string().min(1, "Name is required"),
+    email: z.email("Invalid email format"),
+    profilePhoto: z.url("Invalid URL format").optional(),
+    contactNumber: z.string().min(1, "Contact number is required"),
+  })
+});
+
+
+export const userValidationSchema = { CreateDoctorSchema,CreateAdminSchema,CreateSuperAdminSchema };

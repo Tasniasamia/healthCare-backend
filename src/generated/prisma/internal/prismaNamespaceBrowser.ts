@@ -84,8 +84,8 @@ export const AdminScalarFieldEnum = {
   userId: 'userId',
   name: 'name',
   email: 'email',
-  status: 'status',
-  role: 'role',
+  profilePhoto: 'profilePhoto',
+  contactNumber: 'contactNumber',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -163,8 +163,8 @@ export const SuperAdminScalarFieldEnum = {
   userId: 'userId',
   name: 'name',
   email: 'email',
-  status: 'status',
-  role: 'role',
+  profilePhoto: 'profilePhoto',
+  contactNumber: 'contactNumber',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
