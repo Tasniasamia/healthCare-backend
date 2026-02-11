@@ -20,12 +20,14 @@ const getAllAdmin = async (searchQuery: IAdminFilterRequest) => {
       createdAt: "desc",
     },
     select: {
+      id:true,
       name: true,
       email: true,
       contactNumber: true,
       profilePhoto: true,
       createdAt: true,
       updatedAt: true,
+      userId:true,
       user: {
         select: {
           name: true,
@@ -50,12 +52,14 @@ const getAdminById = async (id: string) => {
       createdAt: "desc",
     },
     select: {
+      id:true,
       name: true,
       email: true,
       contactNumber: true,
       profilePhoto: true,
       createdAt: true,
       updatedAt: true,
+      userId:true,
       user: {
         select: {
           name: true,

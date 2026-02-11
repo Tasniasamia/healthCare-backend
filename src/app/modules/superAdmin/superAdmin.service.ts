@@ -20,10 +20,12 @@ const getAllSuperAdmin = async (searchQuery: ISuperAdminFilterRequest) => {
       createdAt: "desc",
     },
     select: {
+      id:true,
       name: true,
       email: true,
       contactNumber: true,
       profilePhoto: true,
+      userId:true,
       createdAt: true,
       updatedAt: true,
       user: {
@@ -50,12 +52,14 @@ const getSuperAdminById = async (id: string) => {
       createdAt: "desc",
     },
     select: {
+      id:true,
       name: true,
       email: true,
       contactNumber: true,
       profilePhoto: true,
       createdAt: true,
       updatedAt: true,
+      userId:true,
       user: {
         select: {
           name: true,
