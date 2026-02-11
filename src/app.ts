@@ -3,10 +3,14 @@ import cors from 'cors';
 import route from "./app/routes";
 import { globalErrorHandler } from "./app/middleware/globalErrorHandler";
 import { NotfoundHandler } from "./app/middleware/notFoundHandler";
+import cookieParser from "cookie-parser";
+
 
 const app:Application=express();
 app.use(express.json());
 app.use(express.urlencoded({extended:true}));
+app.use(cookieParser());
+
 const allowedOrigins = [
     process.env.APP_URL || "http://localhost:3000",
     process.env.PROD_APP_URL, // Production frontend URL
