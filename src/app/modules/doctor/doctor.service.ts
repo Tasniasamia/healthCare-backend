@@ -82,11 +82,12 @@ const getDoctorById = async (id: string) => {
       },
     },
   });
+
   return result;
 };
 
 const updateDoctor = async (id: string, payload: TUpdateDoctorPayload) => {
-  const { specialities, userId, ...restData } = payload;
+  const { specialities, userId, ...doctorData } = payload;
   const existDoctor = await prisma.doctor.findFirst({
     where: {
       id,
@@ -110,7 +111,7 @@ const updateDoctor = async (id: string, payload: TUpdateDoctorPayload) => {
     //update doctor data
     await tx.doctor.update({
       where: { id: id },
-      data: restData,
+      data: doctorData,
     });
     //update into user
     const userUpdateData: any = {};
@@ -185,26 +186,38 @@ const deleteDoctor = async (id: string) => {
     },
     include: { user: true },
   });
-  if(!existDoctor){
+  if (!existDoctor) {
     throw new AppError(
-        status.FORBIDDEN,
-        "Forbidden User. Doctor doesn't exist here"
-      );
+      status.FORBIDDEN,
+      "Forbidden User. Doctor doesn't exist here"
+    );
   }
-  const softDeleteDoctor=await prisma.doctor.update({where:{id:id},data:{isDeleted:true}});
-  try{
-    if(softDeleteDoctor?.id){
-    const result=    await prisma.$transaction(async(tx)=>{
-            return await tx.user.update({where:{id:softDeleteDoctor?.userId},data:{isDeleted:true}})
+  const softDeleteDoctor = await prisma.doctor.update({
+    where: { id: id },
+    data: { isDeleted: true, deletedAt: new Date() },
+  });
+  try {
+    if (softDeleteDoctor?.id) {
+      const result = await prisma.$transaction(async (tx) => {
+        return await tx.user.update({
+          where: { id: softDeleteDoctor?.userId },
+          data: { isDeleted: true, deletedAt: new Date() },
         });
-        return {...result,user:{...softDeleteDoctor}}
+      });
+      return { ...result, user: { ...softDeleteDoctor } };
     }
-
-  }
-  catch(error:any){
-    await prisma.doctor.update({where:{id:id},data:{isDeleted:true}});
+  } catch (error: any) {
+    await prisma.doctor.update({
+      where: { id: id },
+      data: { isDeleted: true },
+    });
     return null;
   }
 };
 
-export const doctorService = { getAllDoctor, getDoctorById, updateDoctor,deleteDoctor };
+export const doctorService = {
+  getAllDoctor,
+  getDoctorById,
+  updateDoctor,
+  deleteDoctor,
+};

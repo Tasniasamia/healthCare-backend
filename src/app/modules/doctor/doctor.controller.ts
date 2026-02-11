@@ -18,7 +18,10 @@ const getAllDoctor=catchAsyncHandler(async(req:Request,res:Response)=>{
     const {id}=await req?.params;
 
     const result=await doctorService.getDoctorById(id as string) ;
-    sendResponse(res, {
+    if(!result){
+        throw new Error("Doctor doesn'st exist here");
+    }
+   return sendResponse(res, {
      httpStatusCode: status.OK,
      success: true,
      message: "Doctors retrieved successfully",

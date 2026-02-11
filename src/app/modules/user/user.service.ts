@@ -139,7 +139,6 @@ const createAdmin = async (payload: TCreateAdminPayload) => {
         },
       });
     });
-    console.log("createAdmin", result);
     return result;
   } catch (error: any) {
     await prisma.user.delete({ where: { id: createUser?.user?.id } });
