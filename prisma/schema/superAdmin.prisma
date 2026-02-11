@@ -1,0 +1,11 @@
+model superAdmin {
+    id        String     @id @default(uuid())
+    userId    String     @unique
+    user      User       @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+    name      String
+    email     String
+    status    UserStatus @default(ACTIVE)
+    role      Role
+    createdAt DateTime   @default(now())
+    updatedAt DateTime   @updatedAt
+}

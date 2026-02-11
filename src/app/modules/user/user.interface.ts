@@ -1,15 +1,14 @@
-import type { Gender } from "../../../generated/prisma/enums";
+import type { Gender, Role, UserStatus } from "../../../generated/prisma/enums";
 
 export interface TCreateDoctorPayload{
     password:string;
     doctor:{
-        name:string;
-        email:string;
-        userId:string;
-        profilePhoto?:string;
-  contactNumber?:string;
+  name:string;
+  email:string;
+  profilePhoto?:string;
+  contactNumber:string;
   address?:string
-  registrationNumber?:string
+  registrationNumber:string
   experience :number;
   gender:Gender;
   appointmentFee:number;
@@ -17,6 +16,27 @@ export interface TCreateDoctorPayload{
   currentWorkingPlace:string;
   designation:string;
   avaerageRating:number;
+  
 },
 specialities:string[]
+}
+
+export interface TCreateAdminPayload{
+  password:string;
+  admin:{
+    name :string;
+    email :string;
+    status : UserStatus
+    role :Role
+    }
+}
+
+export interface TCreateSuperAdminPayload{
+  password:string;
+  superAdmin:{
+    name :string;
+    email :string;
+    status : UserStatus
+    role :Role
+    }
 }

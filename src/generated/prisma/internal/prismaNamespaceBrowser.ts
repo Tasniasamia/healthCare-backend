@@ -51,10 +51,12 @@ export const AnyNull = runtime.AnyNull
 
 
 export const ModelName = {
+  admin: 'admin',
   doctor: 'doctor',
   patient: 'patient',
   Speciality: 'Speciality',
   doctorSpeciality: 'doctorSpeciality',
+  superAdmin: 'superAdmin',
   User: 'User',
   Session: 'Session',
   Account: 'Account',
@@ -75,6 +77,20 @@ export const TransactionIsolationLevel = runtime.makeStrictEnum({
 } as const)
 
 export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof typeof TransactionIsolationLevel]
+
+
+export const AdminScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  name: 'name',
+  email: 'email',
+  status: 'status',
+  role: 'role',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type AdminScalarFieldEnum = (typeof AdminScalarFieldEnum)[keyof typeof AdminScalarFieldEnum]
 
 
 export const DoctorScalarFieldEnum = {
@@ -140,6 +156,20 @@ export const DoctorSpecialityScalarFieldEnum = {
 } as const
 
 export type DoctorSpecialityScalarFieldEnum = (typeof DoctorSpecialityScalarFieldEnum)[keyof typeof DoctorSpecialityScalarFieldEnum]
+
+
+export const SuperAdminScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  name: 'name',
+  email: 'email',
+  status: 'status',
+  role: 'role',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type SuperAdminScalarFieldEnum = (typeof SuperAdminScalarFieldEnum)[keyof typeof SuperAdminScalarFieldEnum]
 
 
 export const UserScalarFieldEnum = {

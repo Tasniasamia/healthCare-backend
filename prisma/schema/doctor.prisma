@@ -1,6 +1,6 @@
 
 model doctor {
-  id                  String   @id @default(uuid())
+ id                  String   @id @default(uuid())
   userId              String  @unique
   user                User     @relation(fields: [userId], references:[id], onDelete: Cascade, onUpdate: Cascade)
   name                String
@@ -23,4 +23,5 @@ model doctor {
   @@index([gender], name: "doctors_gender")
   @@map("doctors")
 }
+
 
