@@ -5,6 +5,7 @@ import status from "http-status";
 import { AppError } from "../../errorHelplers/appError";
 import { superAdminService } from "./superAdmin.service";
 import { SuperAdminScalarFieldEnum } from "../../../generated/prisma/internal/prismaNamespace";
+import type { JwtPayload } from "jsonwebtoken";
 
 const getAllSuperAdmin=catchAsyncHandler(async(req:Request,res:Response,next:NextFunction)=>{
 const {email,isDeleted}=req?.query;
@@ -45,14 +46,13 @@ const getSuperAdminById=catchAsyncHandler(async(req:Request,res:Response)=>{
 })
 
 const deleteSuperAdmin=catchAsyncHandler(async(req:Request,res:Response)=>{
-    const payload=await req?.body;
     const {id}=req?.params;
     const result=await superAdminService.deleteSuperAdmin(id as string);
     if(result){
 return sendResponse(res,{
     httpStatusCode:status.CREATED,
     success:true,
-    message:"Super Admin deleted successfully",
+    message:" User deleted successfully",
     data:result
     
 })

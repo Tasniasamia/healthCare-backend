@@ -1,4 +1,4 @@
-import type { Request, Response } from "express";
+import type { NextFunction, Request, Response } from "express";
 import { catchAsyncHandler } from "../../shared/catchAsyncHandler";
 import { AuthService } from "./auth.service";
 import { sendResponse } from "../../shared/sendResponse";
@@ -6,6 +6,7 @@ import status from "http-status";
 import { cookieUtils } from "../../utils/cookie";
 import { envVars } from "../../../config/env";
 import { tokenUtils } from "../../utils/token";
+import type { JwtPayload } from "jsonwebtoken";
 
 const registerPatient = catchAsyncHandler(
   async (req: Request, res: Response) => {
@@ -32,7 +33,7 @@ const loginUser = catchAsyncHandler(async (req: Request, res: Response) => {
   tokenUtils.setGenerateRereshTokenCookie(res, refreshToken);
   tokenUtils.setBetterAuthSessionCookie(res, token);
 
-  sendResponse(res, {
+  return await sendResponse(res, {
     httpStatusCode: status.OK,
     success: true,
     message: "User logged in successfully",
@@ -40,7 +41,22 @@ const loginUser = catchAsyncHandler(async (req: Request, res: Response) => {
   });
 });
 
+const getProfile=catchAsyncHandler(async(req:Request,res:Response,next:NextFunction)=>{
+const user=await req.user;
+const result=await AuthService.getProfile(user as JwtPayload);
+return await sendResponse(res, {
+  httpStatusCode: status.OK,
+  success: true,
+  message: "Get profile successfully",
+  data: result,
+});
+})
+
+
+
+
 export const AuthController = {
   registerPatient,
   loginUser,
+  getProfile
 };

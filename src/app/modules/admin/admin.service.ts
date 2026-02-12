@@ -148,7 +148,7 @@ const deleteAdmin = async (id: string) => {
         const result = await prisma.$transaction(async (tx) => {
           return await tx.user.update({
             where: { id: softDeleteAdmin?.userId },
-            data: { isDeleted: true, deletedAt: new Date() },
+            data: { isDeleted: true, deletedAt: new Date() ,status:UserStatus.DELETED},
           });
         });
         return { ...result, user: { ...softDeleteAdmin } };
@@ -156,7 +156,7 @@ const deleteAdmin = async (id: string) => {
     } catch (error: any) {
       await prisma.admin.update({
         where: { id: id },
-        data: { isDeleted: true },
+        data: { isDeleted: true,deletedAt:new Date() },
       });
       return null;
     }

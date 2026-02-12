@@ -11,5 +11,5 @@ const route=Router();
 route.get('/',superAdminController.getAllSuperAdmin);
 route.get('/:id',superAdminController.getSuperAdminById);
 route.put('/:id',validationRequest(superAdminSchema.updateSuperAdminSchema),checkAuth(Role.ADMIN,Role.SUPER_ADMIN),superAdminController.updateSuperAdmin);
-route.delete("/:id", checkAuth(Role.ADMIN,Role.SUPER_ADMIN), superAdminController.deleteSuperAdmin);
+route.delete("/:id", checkAuth(Role.SUPER_ADMIN), superAdminController.deleteSuperAdmin);
 export const superAdminRoutes=route;

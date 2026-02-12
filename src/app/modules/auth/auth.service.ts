@@ -4,6 +4,7 @@ import { AppError } from "../../errorHelplers/appError";
 import { auth } from "../../lib/auth";
 import { prisma } from "../../lib/prisma";
 import { tokenUtils } from "../../utils/token";
+import type { JwtPayload } from "jsonwebtoken";
 
 interface IRegisterPatientPayload {
   name: string;
@@ -62,8 +63,7 @@ const loginUser = async (payload: ILoginUserPayload) => {
     id: user?.id,
     status: user?.status,
     isDeleted: user?.isDeleted,
-    name:user?.name,
-    
+    name: user?.name,
   };
   const accessToken = await tokenUtils.generateAccessToken(tokenPayload);
   const refreshToken = await tokenUtils.generateRefreshToken(tokenPayload);
@@ -79,7 +79,45 @@ const loginUser = async (payload: ILoginUserPayload) => {
   return { data, accessToken, refreshToken, token };
 };
 
+const getProfile = async (user: JwtPayload) => {
+  const findUser = await prisma.user.findFirst({
+    where: { id: user?.id, isDeleted: false },
+    include: {
+      patient: {
+        include: {
+          appointments: true,
+          medicalReports: true,
+          patientHealthData: true,
+          prescriptions: true,
+          reviews: true,
+        },
+      },
+      doctor: {
+        include:{
+          appointments:true,
+          doctorSchedules:true,
+          prescriptions:true,
+          specialities:true,
+          reviews:true
+
+        },
+        
+      },
+      admin:true,
+      superAdmin:true
+    },
+  });
+  if (!findUser) {
+    throw new AppError(
+      status.UNAUTHORIZED,
+      "Unauthrozied Access. You are not athorized here"
+    );
+  }
+  return findUser;
+};
+
 export const AuthService = {
   registerPatient,
   loginUser,
+  getProfile
 };

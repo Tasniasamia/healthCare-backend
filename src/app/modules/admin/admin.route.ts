@@ -8,6 +8,6 @@ import { validationRequest } from "../../middleware/validationRequest";
 const route=Router();
 route.get('/',adminController.getAllAdmin);
 route.get('/:id',adminController.getAdminById);
-route.put('/:id',validationRequest(adminSchema.updateAdminSchema),checkAuth(Role.ADMIN,Role.SUPER_ADMIN),adminController.updateAdmin);
-route.delete("/:id", checkAuth(Role.ADMIN,Role.SUPER_ADMIN), adminController.deleteAdmin);
+route.put('/:id',validationRequest(adminSchema.updateAdminSchema),checkAuth(Role.ADMIN),adminController.updateAdmin);
+route.delete("/:id", checkAuth(Role.ADMIN), adminController.deleteAdmin);
 export const adminRoutes=route;

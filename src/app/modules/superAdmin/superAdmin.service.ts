@@ -1,9 +1,10 @@
 import status from "http-status";
-import { UserStatus } from "../../../generated/prisma/enums";
+import { Role, UserStatus } from "../../../generated/prisma/enums";
 import { AppError } from "../../errorHelplers/appError";
 import { prisma } from "../../lib/prisma";
 import type { superAdminWhereInput } from "../../../generated/prisma/models";
 import type { ISuperAdminFilterRequest, TUpdateSuperAdminPayload } from "./superAdmin.interface";
+import type { JwtPayload } from "jsonwebtoken";
 
 const getAllSuperAdmin = async (searchQuery: ISuperAdminFilterRequest) => {
   const anyConditions: superAdminWhereInput[] = [];
@@ -125,36 +126,71 @@ const updateSuperAdmin=async(id:string,payload:TUpdateSuperAdminPayload)=>{
 }
 
 const deleteSuperAdmin = async (id: string) => {
-    const existSuperAdmin = await prisma.superAdmin.findFirst({
+
+    const existUser = await prisma.user.findFirst({
       where: {
         id: id,
         isDeleted: false,
-        user: { status: UserStatus?.ACTIVE, isDeleted: false },
-      },
-      include: { user: true },
+        status: UserStatus?.ACTIVE}
+     
     });
-    if (!existSuperAdmin) {
+    if (!existUser) {
       throw new AppError(
         status.FORBIDDEN,
-        "Forbidden User. Super Admin doesn't exist here"
+        "Forbidden User. User doesn't exist here"
       );
     }
-    const softDeleteSuperAdmin = await prisma.superAdmin.update({
-      where: { id: id },
-      data: { isDeleted: true, deletedAt: new Date() },
-    });
-    try {
-      if (softDeleteSuperAdmin?.id) {
-        const result = await prisma.$transaction(async (tx) => {
-          return await tx.user.update({
-            where: { id: softDeleteSuperAdmin?.userId },
-            data: { isDeleted: true, deletedAt: new Date() },
-          });
+
+
+   if(existUser?.role === Role.SUPER_ADMIN){
+    throw new AppError(
+      status.NOT_ACCEPTABLE,
+      "You can't delete the SUPER ADMIN"
+    )
+   }
+
+  const deletedUser = await prisma.user.update({
+    where: { id },
+    data: {
+      isDeleted: true,
+      deletedAt: new Date(),
+      status:UserStatus.DELETED
+    },
+  });
+   try {
+
+    const result = await prisma.$transaction(async (tx) => {
+
+   
+
+      if (deletedUser.role === Role.ADMIN) {
+        await tx.admin.update({
+          where: { userId: id },
+          data: { isDeleted: true, deletedAt: new Date() },
         });
-        return { ...result, user: { ...softDeleteSuperAdmin } };
       }
+
+      if (deletedUser.role === Role.PATIENT) {
+        await tx.patient.update({
+          where: { userId: id },
+          data: { isDeleted: true, deletedAt: new Date() },
+        });
+      }
+
+      if (deletedUser.role === Role.DOCTOR) {
+        await tx.doctor.update({
+          where: { userId: id },
+          data: { isDeleted: true, deletedAt: new Date() },
+        });
+      }
+
+      return deletedUser;
+    });
+     
+    return result;
+
     } catch (error: any) {
-      await prisma.superAdmin.update({
+      await prisma.user.update({
         where: { id: id },
         data: { isDeleted: true },
       });
