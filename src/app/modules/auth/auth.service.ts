@@ -5,6 +5,9 @@ import { auth } from "../../lib/auth";
 import { prisma } from "../../lib/prisma";
 import { tokenUtils } from "../../utils/token";
 import type { JwtPayload } from "jsonwebtoken";
+import { jwtUtils } from "../../utils/jwt";
+import { envVars } from "../../../config/env";
+import type { IJwtUserPayload } from "../../interfaces/token.interface";
 
 interface IRegisterPatientPayload {
   name: string;
@@ -65,8 +68,8 @@ const loginUser = async (payload: ILoginUserPayload) => {
     isDeleted: user?.isDeleted,
     name: user?.name,
   };
-  const accessToken = await tokenUtils.generateAccessToken(tokenPayload);
-  const refreshToken = await tokenUtils.generateRefreshToken(tokenPayload);
+  const accessToken = await tokenUtils.generateAccessToken(tokenPayload as JwtPayload);
+  const refreshToken = await tokenUtils.generateRefreshToken(tokenPayload as JwtPayload);
 
   if (data.user.status === UserStatus.BLOCKED) {
     throw new AppError(status.FORBIDDEN, "User is blocked");
@@ -93,18 +96,16 @@ const getProfile = async (user: JwtPayload) => {
         },
       },
       doctor: {
-        include:{
-          appointments:true,
-          doctorSchedules:true,
-          prescriptions:true,
-          specialities:true,
-          reviews:true
-
+        include: {
+          appointments: true,
+          doctorSchedules: true,
+          prescriptions: true,
+          specialities: true,
+          reviews: true,
         },
-        
       },
-      admin:true,
-      superAdmin:true
+      admin: true,
+      superAdmin: true,
     },
   });
   if (!findUser) {
@@ -116,8 +117,85 @@ const getProfile = async (user: JwtPayload) => {
   return findUser;
 };
 
+const getNewToken = async (refreshToken: string, sessionToken: string) => {
+
+  const verifyRefreshToken = jwtUtils.verifyToken(
+    refreshToken,
+    envVars.REFRESH_TOKEN_SECRET
+  );
+  if (!verifyRefreshToken?.success) {
+    throw new AppError(
+      status.BAD_REQUEST,
+      verifyRefreshToken?.message as string
+    );
+  }
+
+  const user = verifyRefreshToken.data as JwtPayload;
+ 
+
+  console.log("user",user);
+  const accessTokenNew = await tokenUtils.generateAccessToken(
+    {
+      email:user?.email,
+      role: user?.role,
+      id: user?.id,
+      status: user?.status,
+      isDeleted: user?.isDeleted,
+      name: user?.name,
+    } 
+  );
+  const refreshTokenNew = await tokenUtils.generateRefreshToken(
+    {
+      email: user?.email ,
+      role: user?.role,
+      id: user?.id,
+      status: user?.status,
+      isDeleted: user?.isDeleted,
+      name: user?.name,
+    } 
+  );
+  // console.log("accessTokenNew", accessTokenNew);
+
+  const sessionExist = await prisma.session.findFirst({
+    where: {
+      token: sessionToken,
+    },
+    include: {
+      user: true,
+    },
+  });
+  console.log("sessionExist", sessionExist);
+
+  if (!sessionExist) {
+    throw new AppError(
+      status.UNAUTHORIZED,
+      "Unauthorized Access. You are not authenticate here"
+    );
+  }
+
+  const sessionTokenExpirationUpdate = await prisma.session.update({
+    where: { token: sessionToken },
+    data: {
+      token: sessionToken,
+      expiresAt: new Date(Date.now() + 60 * 60 * 1000 * 24),
+      updatedAt: new Date(),
+    },
+  });
+  console.log("sessionTokenExpirationUpdate", sessionTokenExpirationUpdate);
+  if (sessionTokenExpirationUpdate) {
+    return {
+      accessToken:  accessTokenNew,
+      refreshToken: refreshTokenNew,
+      token: sessionToken,
+    };
+  }
+
+  return null;
+};
+
 export const AuthService = {
   registerPatient,
   loginUser,
-  getProfile
+  getProfile,
+  getNewToken,
 };
