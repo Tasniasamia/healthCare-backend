@@ -7,7 +7,6 @@ import status from "http-status";
 const createDoctor = catchAsyncHandler(async (req: Request, res: Response) => {
   const payload = await req.body;
   const data = await userService.createDoctor(payload);
-  console.log("data", data);
   if (data) {
     return await sendResponse(res, {
       httpStatusCode: status.CREATED,
@@ -22,7 +21,6 @@ const createDoctor = catchAsyncHandler(async (req: Request, res: Response) => {
 const createAdmin = catchAsyncHandler(async (req: Request, res: Response) => {
   const payload = await req.body;
   const data = await userService.createAdmin(payload);
-  console.log("data", data);
   if (data) {
     return await sendResponse(res, {
       httpStatusCode: status.CREATED,

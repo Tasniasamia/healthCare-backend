@@ -54,7 +54,7 @@ const loginUser = async (payload: ILoginUserPayload) => {
       password,
     },
   });
-  console.log("data", data);
+
   const { token, user } = data;
   const tokenPayload = {
     email: user?.email,

@@ -4,9 +4,7 @@ import { catchAsyncHandler } from "../../shared/catchAsyncHandler";
 import { sendResponse } from "../../shared/sendResponse";
 
  const createSpeciality= (catchAsyncHandler(async(req:Request,res:Response,next:NextFunction)=>{
-  console.log("userRequest",req?.user);
   const data=await req.body;
-  console.log("data",await req.body);
   const response=await specialityService.createSpeciality(data);
   if(response){
   return await sendResponse(res,{

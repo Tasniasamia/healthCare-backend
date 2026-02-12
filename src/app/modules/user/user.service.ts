@@ -1,5 +1,5 @@
 import type { NextFunction } from "express";
-import { Role, type Speciality } from "../../../generated/prisma/client";
+import { Role, type Specialty } from "../../../generated/prisma/client";
 import { auth } from "../../lib/auth";
 import { prisma } from "../../lib/prisma";
 import type {
@@ -11,9 +11,9 @@ import { AppError } from "../../errorHelplers/appError";
 import status from "http-status";
 
 const createDoctor = async (payload: TCreateDoctorPayload) => {
-  const specialities: Speciality[] = [];
+  const specialities: Specialty[] = [];
   for (let specialityId of payload.specialities) {
-    const findSpeciality = await prisma.speciality.findUnique({
+    const findSpeciality = await prisma.specialty.findUnique({
       where: { id: specialityId },
     });
     if (!findSpeciality) {
@@ -51,10 +51,10 @@ const createDoctor = async (payload: TCreateDoctorPayload) => {
       const createDoctorSpecialityPayload = specialities.map((speciality) => {
         return {
           doctorId: createDoctor?.id,
-          specialityId: speciality?.id,
+          specialtyId: speciality?.id,
         };
       });
-      const createDoctorSpeciality = await prisma.doctorSpeciality.createMany({
+      const createDoctorSpeciality = await prisma.doctorSpecialty.createMany({
         data: createDoctorSpecialityPayload,
       });
       const findDoctorData = await prisma.doctor.findUnique({

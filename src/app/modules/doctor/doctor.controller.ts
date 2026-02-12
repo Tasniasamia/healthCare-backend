@@ -30,6 +30,7 @@ const getAllDoctor=catchAsyncHandler(async(req:Request,res:Response)=>{
 
 const updateDoctor=catchAsyncHandler(async(req:Request,res:Response)=>{
     const payload=await req?.body;
+    console.log('payload',await req?.body);
     const {id}=req?.params;
     const result=await doctorService.updateDoctor(id as string,payload);
     sendResponse(res,{

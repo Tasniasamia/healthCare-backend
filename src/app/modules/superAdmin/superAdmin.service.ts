@@ -108,10 +108,7 @@ const updateSuperAdmin=async(id:string,payload:TUpdateSuperAdminPayload)=>{
 
             if (payload.name) userUpdateData.name = payload.name;
             if (payload.email) userUpdateData.email = payload.email;
-            console.log(
-              "exist user",
-              await tx.user.findUnique({ where: { id: payload?.userId } })
-            );
+          
            return   await tx.user.update({
               where: { id: payload?.userId },
               data: userUpdateData,

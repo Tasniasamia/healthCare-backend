@@ -1,6 +1,7 @@
 import z from "zod";
 
 const createUpdateDoctorSchema=z.object({
+   userId:z.string().optional(),
     name: z.string().optional(),
     profilePhoto: z.url("Invalid URL format").optional(),
     contactNumber: z.string().optional(),
@@ -17,8 +18,9 @@ const createUpdateDoctorSchema=z.object({
     qualification: z.string().optional(),
     currentWorkingPlace: z.string().optional(),
     designation: z.string().optional(),
-    specialties: z
-      .array(z.uuid("Each specialty ID must be a valid UUID"))
+    specialities: z
+      .array(z.object({  specilitiesId:z.string(),
+        shouldDelete:z.boolean().optional()}))
       .optional(),
   })
 

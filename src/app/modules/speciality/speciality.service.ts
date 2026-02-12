@@ -2,8 +2,7 @@ import { prisma } from "../../lib/prisma";
 import type { speciality } from "./speciality.interface";
 
 const createSpeciality=async(payload:speciality)=>{
-    console.log("payload",payload);
-    const res=await prisma.speciality.create({
+    const res=await prisma.specialty.create({
         data:{...payload}
     });
     return res;

@@ -12,6 +12,11 @@ isDeleted     Boolean @default(false)
 deletedAt     DateTime?
 createdAt     DateTime  @default(now())
 updatedAt     DateTime  @updatedAt
+  appointments      Appointment[]
+  prescriptions     Prescription[]
+  medicalReports    MedicalReport[]
+  reviews           Review[]
+  patientHealthData PatientHealthData?
 @@index([email],name:"patient_email")
 @@index([isDeleted],name:"patient_isDeleted")
 @@map("patients")

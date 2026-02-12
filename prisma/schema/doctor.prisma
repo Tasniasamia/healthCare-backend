@@ -1,4 +1,6 @@
 
+
+
 model doctor {
  id                  String   @id @default(uuid())
   userId              String  @unique
@@ -20,7 +22,11 @@ model doctor {
   deletedAt           DateTime?
   createAt            DateTime @default(now())
   updatedAt           DateTime @updatedAt
-  specialities        doctorSpeciality[]
+  specialities        DoctorSpecialty[]
+  appointments    Appointment[]
+  prescriptions   Prescription[]
+  reviews         Review[]
+  doctorSchedules DoctorSchedules[]
   @@index([email], name: "doctors_email")
   @@index([gender], name: "doctors_gender")
   @@map("doctors")

@@ -1,7 +1,12 @@
 import type { Gender } from "../../../generated/prisma/enums";
 
+export interface TSpecialitestype{
+  specilitiesId:string,
+  shouldDelete?:boolean
+}
+
 export interface TUpdateDoctorPayload {
-  userId:string,
+  userId?:string,
   name?: string;
   email?: string;
   profilePhoto?: string;
@@ -15,5 +20,5 @@ export interface TUpdateDoctorPayload {
   currentWorkingPlace?: string;
   designation?: string;
   avaerageRating?: number;
-  specialities?: string[];
+  specialities?: TSpecialitestype[];
 }

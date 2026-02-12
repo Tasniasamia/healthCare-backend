@@ -4,6 +4,6 @@ import { checkAuth } from "../../middleware/checkAuth";
 import { Role } from "../../../generated/prisma/enums";
 
 const route=Router();
-route.post('/',checkAuth(Role.DOCTOR),specialityController.createSpeciality);
+route.post('/',checkAuth(Role.ADMIN,Role.SUPER_ADMIN),specialityController.createSpeciality);
 
 export const specialityRoute=route;
