@@ -14,6 +14,12 @@ router.get(
   checkAuth(Role.ADMIN, Role.DOCTOR, Role.PATIENT, Role.SUPER_ADMIN),
   AuthController.getProfile
 );
-router.get('/refresh-token',AuthController.getNewToken);
-router.post('/changePassword',validationRequest(authValidationSchema.changePasswordSchema),AuthController.changePassword);
+router.get("/refresh-token", AuthController.getNewToken);
+router.post(
+  "/changePassword",
+  validationRequest(authValidationSchema.changePasswordSchema),
+  AuthController.changePassword
+);
+router.get("/logOut",checkAuth(Role.ADMIN, Role.DOCTOR, Role.PATIENT, Role.SUPER_ADMIN), AuthController.logOut);
+
 export const AuthRoutes = router;

@@ -9,16 +9,21 @@ import { jwtUtils } from "../../utils/jwt";
 import { envVars } from "../../../config/env";
 import type { IJwtUserPayload } from "../../interfaces/token.interface";
 import type { TChangePasswordPayload } from "./auth.interface";
+import type { Request, Response } from "express";
+import { cookieUtils } from "../../utils/cookie";
 
 interface IRegisterPatientPayload {
   name: string;
   email: string;
   password: string;
 }
+interface ILoginUserPayload {
+  email: string;
+  password: string;
+}
 
 const registerPatient = async (payload: IRegisterPatientPayload) => {
   const { name, email, password } = payload;
-
   const data = await auth.api.signUpEmail({
     body: {
       name,
@@ -45,11 +50,6 @@ const registerPatient = async (payload: IRegisterPatientPayload) => {
   }
 };
 
-interface ILoginUserPayload {
-  email: string;
-  password: string;
-}
-
 const loginUser = async (payload: ILoginUserPayload) => {
   const { email, password } = payload;
 
@@ -69,8 +69,12 @@ const loginUser = async (payload: ILoginUserPayload) => {
     isDeleted: user?.isDeleted,
     name: user?.name,
   };
-  const accessToken = await tokenUtils.generateAccessToken(tokenPayload as JwtPayload);
-  const refreshToken = await tokenUtils.generateRefreshToken(tokenPayload as JwtPayload);
+  const accessToken = await tokenUtils.generateAccessToken(
+    tokenPayload as JwtPayload
+  );
+  const refreshToken = await tokenUtils.generateRefreshToken(
+    tokenPayload as JwtPayload
+  );
 
   if (data.user.status === UserStatus.BLOCKED) {
     throw new AppError(status.FORBIDDEN, "User is blocked");
@@ -119,7 +123,6 @@ const getProfile = async (user: JwtPayload) => {
 };
 
 const getNewToken = async (refreshToken: string, sessionToken: string) => {
-
   const verifyRefreshToken = jwtUtils.verifyToken(
     refreshToken,
     envVars.REFRESH_TOKEN_SECRET
@@ -132,29 +135,24 @@ const getNewToken = async (refreshToken: string, sessionToken: string) => {
   }
 
   const user = verifyRefreshToken.data as JwtPayload;
- 
 
-  console.log("user",user);
-  const accessTokenNew = await tokenUtils.generateAccessToken(
-    {
-      email:user?.email,
-      role: user?.role,
-      id: user?.id,
-      status: user?.status,
-      isDeleted: user?.isDeleted,
-      name: user?.name,
-    } 
-  );
-  const refreshTokenNew = await tokenUtils.generateRefreshToken(
-    {
-      email: user?.email ,
-      role: user?.role,
-      id: user?.id,
-      status: user?.status,
-      isDeleted: user?.isDeleted,
-      name: user?.name,
-    } 
-  );
+  console.log("user", user);
+  const accessTokenNew = await tokenUtils.generateAccessToken({
+    email: user?.email,
+    role: user?.role,
+    id: user?.id,
+    status: user?.status,
+    isDeleted: user?.isDeleted,
+    name: user?.name,
+  });
+  const refreshTokenNew = await tokenUtils.generateRefreshToken({
+    email: user?.email,
+    role: user?.role,
+    id: user?.id,
+    status: user?.status,
+    isDeleted: user?.isDeleted,
+    name: user?.name,
+  });
   // console.log("accessTokenNew", accessTokenNew);
 
   const sessionExist = await prisma.session.findFirst({
@@ -185,7 +183,7 @@ const getNewToken = async (refreshToken: string, sessionToken: string) => {
   console.log("sessionTokenExpirationUpdate", sessionTokenExpirationUpdate);
   if (sessionTokenExpirationUpdate) {
     return {
-      accessToken:  accessTokenNew,
+      accessToken: accessTokenNew,
       refreshToken: refreshTokenNew,
       token: sessionToken,
     };
@@ -194,58 +192,98 @@ const getNewToken = async (refreshToken: string, sessionToken: string) => {
   return null;
 };
 
-const changePassword=async(payload:TChangePasswordPayload,sessionToken:string)=>{
-  console.log("payload",payload);
+const changePassword = async (
+  payload: TChangePasswordPayload,
+  sessionToken: string
+) => {
+  console.log("payload", payload);
   const session = await auth.api.getSession({
+    headers: new Headers({
+      Authorization: `Bearer ${sessionToken}`,
+    }),
+  });
+
+  if (!session) {
+    throw new AppError(status.UNAUTHORIZED, "Invalid session token");
+  }
+  const data = await auth.api.changePassword({
+    body: {
+      newPassword: payload?.newPassword,
+      currentPassword: payload?.currentPassword,
+      revokeOtherSessions: true,
+    },
+
+    headers: new Headers({
+      Authorization: `Bearer ${sessionToken}`,
+    }),
+  });
+  if (session.user.needPasswordChanges) {
+    await prisma.user.update({
+      where: {
+        id: session.user.id,
+      },
+      data: {
+        needPasswordChanges: false,
+      },
+    });
+  }
+  const tokenPayload = {
+    email: data?.user?.email,
+    role: data?.user?.role,
+    id: data?.user?.id,
+    status: data?.user?.status,
+    isDeleted: data?.user?.isDeleted,
+    name: data?.user?.name,
+  };
+  const accessToken = await tokenUtils.generateAccessToken(
+    tokenPayload as JwtPayload
+  );
+  const refreshToken = await tokenUtils.generateRefreshToken(
+    tokenPayload as JwtPayload
+  );
+
+  console.log("password data", data);
+  return { data, accessToken, refreshToken, token: data?.token };
+};
+
+const logOut = async (res: Response,sessionToken:string) => {
+  const result = await auth.api.signOut({
     headers : new Headers({
         Authorization : `Bearer ${sessionToken}`
     })
 })
-
-if(!session){
-    throw new AppError(status.UNAUTHORIZED, "Invalid session token");
+let  accessTokenClear,refreshTokenClear,sessionTokenClear
+if(result){
+   accessTokenClear = await cookieUtils.clearCookie(res, "accessToken", {
+    httpOnly: true,
+    sameSite: "none",
+    secure: true,
+  });
+   refreshTokenClear = await cookieUtils.clearCookie(res, "refreshToken", {
+    httpOnly: true,
+    sameSite: "none",
+    secure: true,
+  });
+   sessionTokenClear = await cookieUtils.clearCookie(res, "better-auth.session_token", {
+    httpOnly: true,
+    sameSite: "none",
+    secure: true,
+  });
 }
-  const data = await auth.api.changePassword({
-    body: {
-        newPassword: payload?.newPassword, 
-        currentPassword: payload?.currentPassword,
-        revokeOtherSessions: true,
-    },
-    
-    headers: new Headers({
-      Authorization : `Bearer ${sessionToken}`
 
-    }),
+if(accessTokenClear && refreshTokenClear && sessionTokenClear){
+  return result;
 
-});
-if(session.user.needPasswordChanges){
-  await prisma.user.update({
-      where: {
-          id: session.user.id,
-      },
-      data: {
-        needPasswordChanges: false,
-      }
-  })
 }
-const tokenPayload = {
-  email: data?.user?.email,
-  role: data?.user?.role,
-  id: data?.user?.id,
-  status: data?.user?.status,
-  isDeleted: data?.user?.isDeleted,
-  name: data?.user?.name,
+return null;
+
 };
-const accessToken = await tokenUtils.generateAccessToken(tokenPayload as JwtPayload);
-const refreshToken = await tokenUtils.generateRefreshToken(tokenPayload as JwtPayload);
 
-console.log("password data",data);
-return  { data, accessToken, refreshToken, token :data?.token};
-}
 export const AuthService = {
   registerPatient,
   loginUser,
   getProfile,
   getNewToken,
-  changePassword
+  changePassword,
+  logOut
 };

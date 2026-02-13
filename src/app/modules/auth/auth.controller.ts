@@ -102,12 +102,22 @@ const changePassword=catchAsyncHandler(async(req:Request,res:Response,next:NextF
 
 })
 
-
+const logOut=catchAsyncHandler(async(req:Request,res:Response,)=>{
+  const sessionToken=await cookieUtils.getCookie(req,'better-auth.session_token')
+  const result=await AuthService.logOut(res,sessionToken);
+  return await sendResponse(res, {
+    httpStatusCode: status.OK,
+    success: true,
+    message: "User logged out successfully",
+    data: result,
+  });
+})
 
 export const AuthController = {
   registerPatient,
   loginUser,
   getProfile,
   getNewToken,
-  changePassword
+  changePassword,
+  logOut
 };
