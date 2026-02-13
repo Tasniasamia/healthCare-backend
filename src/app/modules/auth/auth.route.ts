@@ -2,6 +2,8 @@ import { Router } from "express";
 import { AuthController } from "./auth.controller";
 import { checkAuth } from "../../middleware/checkAuth";
 import { Role } from "../../../generated/prisma/enums";
+import { authValidationSchema } from "./auth.validation";
+import { validationRequest } from "../../middleware/validationRequest";
 
 const router = Router();
 
@@ -13,4 +15,5 @@ router.get(
   AuthController.getProfile
 );
 router.get('/refresh-token',AuthController.getNewToken);
+router.post('/changePassword',validationRequest(authValidationSchema.changePasswordSchema),AuthController.changePassword);
 export const AuthRoutes = router;

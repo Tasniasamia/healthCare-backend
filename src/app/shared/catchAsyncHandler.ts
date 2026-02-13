@@ -7,6 +7,7 @@ export const catchAsyncHandler=(functionHandler:RequestHandler)=>{
           await functionHandler(req,res,next);
         }
         catch(error:any){
+          console.log("error",error)
           next(error);
         }
     }

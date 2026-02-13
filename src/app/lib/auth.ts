@@ -3,6 +3,7 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { prisma } from "./prisma";
 import { Role, UserStatus } from "../../generated/prisma/enums";
 import { envVars } from "../../config/env";
+import { bearer } from "better-auth/plugins";
 
 
 export const auth = betterAuth({
@@ -13,12 +14,13 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
   },
+
   session: {
-    expiresIn:60 * 60 * 1000 * 24 , 
-    updateAge:60 * 60 * 1000 * 24 * 7,
-    cookieCache:{
-      enabled:true,
-      maxAge:60 * 60 * 1000 * 24
+    expiresIn: 60 * 60 * 60 * 24, 
+    updateAge: 60 * 60 * 60 * 24, 
+    cookieCache: {
+        enabled: true,
+        maxAge: 60 * 60 * 60 * 24, 
     }
 },
   user: {
@@ -51,4 +53,8 @@ export const auth = betterAuth({
           }
       }
   },
+  plugins: [
+    bearer(),
+ 
+],
 });

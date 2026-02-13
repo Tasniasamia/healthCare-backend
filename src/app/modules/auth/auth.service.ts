@@ -8,6 +8,7 @@ import type { JwtPayload } from "jsonwebtoken";
 import { jwtUtils } from "../../utils/jwt";
 import { envVars } from "../../../config/env";
 import type { IJwtUserPayload } from "../../interfaces/token.interface";
+import type { TChangePasswordPayload } from "./auth.interface";
 
 interface IRegisterPatientPayload {
   name: string;
@@ -193,9 +194,58 @@ const getNewToken = async (refreshToken: string, sessionToken: string) => {
   return null;
 };
 
+const changePassword=async(payload:TChangePasswordPayload,sessionToken:string)=>{
+  console.log("payload",payload);
+  const session = await auth.api.getSession({
+    headers : new Headers({
+        Authorization : `Bearer ${sessionToken}`
+    })
+})
+
+if(!session){
+    throw new AppError(status.UNAUTHORIZED, "Invalid session token");
+}
+  const data = await auth.api.changePassword({
+    body: {
+        newPassword: payload?.newPassword, 
+        currentPassword: payload?.currentPassword,
+        revokeOtherSessions: true,
+    },
+    
+    headers: new Headers({
+      Authorization : `Bearer ${sessionToken}`
+
+    }),
+
+});
+if(session.user.needPasswordChanges){
+  await prisma.user.update({
+      where: {
+          id: session.user.id,
+      },
+      data: {
+        needPasswordChanges: false,
+      }
+  })
+}
+const tokenPayload = {
+  email: data?.user?.email,
+  role: data?.user?.role,
+  id: data?.user?.id,
+  status: data?.user?.status,
+  isDeleted: data?.user?.isDeleted,
+  name: data?.user?.name,
+};
+const accessToken = await tokenUtils.generateAccessToken(tokenPayload as JwtPayload);
+const refreshToken = await tokenUtils.generateRefreshToken(tokenPayload as JwtPayload);
+
+console.log("password data",data);
+return  { data, accessToken, refreshToken, token :data?.token};
+}
 export const AuthService = {
   registerPatient,
   loginUser,
   getProfile,
   getNewToken,
+  changePassword
 };

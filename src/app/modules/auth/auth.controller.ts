@@ -8,6 +8,7 @@ import { envVars } from "../../../config/env";
 import { tokenUtils } from "../../utils/token";
 import type { JwtPayload } from "jsonwebtoken";
 import { AppError } from "../../errorHelplers/appError";
+import type { TChangePasswordPayload } from "./auth.interface";
 
 const registerPatient = catchAsyncHandler(
   async (req: Request, res: Response) => {
@@ -56,9 +57,7 @@ return await sendResponse(res, {
 const getNewToken=catchAsyncHandler(async(req:Request,res:Response)=>{
 const getSessionToken=await cookieUtils.getCookie(req,'better-auth.session_token')
 const getRefreshToken=await cookieUtils.getCookie(req,'refreshToken');
-// console.log("refreshToken",getRefreshToken);
-// console.log("getSessionToken",getSessionToken);
-// console.log('session token',req.cookies['better-auth.session_token']);
+
 if(!getRefreshToken){
   throw new AppError(status.UNAUTHORIZED,'Refreshtoken is missing');
 }
@@ -82,7 +81,26 @@ sendResponse(res, {
 });
 })
 
+const changePassword=catchAsyncHandler(async(req:Request,res:Response,next:NextFunction)=>{
+  const payload=await req?.body as TChangePasswordPayload;
+  const getSessionToken=await cookieUtils.getCookie(req,'better-auth.session_token')
 
+  const { data, accessToken, refreshToken, token } =
+    await AuthService.changePassword(payload,getSessionToken);
+
+  tokenUtils.setGenerateAccessTokenCookie(res, accessToken);
+  tokenUtils.setGenerateRereshTokenCookie(res, refreshToken);
+  tokenUtils.setBetterAuthSessionCookie(res, token as string);  
+  if(data){
+    return sendResponse(res,{
+      success:true,
+      httpStatusCode:status.OK,
+      message: "password changed successfully",
+      data: data,
+    })
+  }
+
+})
 
 
 
@@ -90,5 +108,6 @@ export const AuthController = {
   registerPatient,
   loginUser,
   getProfile,
-  getNewToken
+  getNewToken,
+  changePassword
 };
