@@ -246,37 +246,129 @@ const changePassword = async (
   return { data, accessToken, refreshToken, token: data?.token };
 };
 
-const logOut = async (res: Response,sessionToken:string) => {
+const logOut = async (res: Response, sessionToken: string) => {
   const result = await auth.api.signOut({
-    headers : new Headers({
-        Authorization : `Bearer ${sessionToken}`
-    })
-})
-let  accessTokenClear,refreshTokenClear,sessionTokenClear
-if(result){
-   accessTokenClear = await cookieUtils.clearCookie(res, "accessToken", {
-    httpOnly: true,
-    sameSite: "none",
-    secure: true,
+    headers: new Headers({
+      Authorization: `Bearer ${sessionToken}`,
+    }),
   });
-   refreshTokenClear = await cookieUtils.clearCookie(res, "refreshToken", {
-    httpOnly: true,
-    sameSite: "none",
-    secure: true,
-  });
-   sessionTokenClear = await cookieUtils.clearCookie(res, "better-auth.session_token", {
-    httpOnly: true,
-    sameSite: "none",
-    secure: true,
-  });
-}
 
-if(accessTokenClear && refreshTokenClear && sessionTokenClear){
+  let accessTokenClear, refreshTokenClear, sessionTokenClear;
+  if (result) {
+    accessTokenClear = await cookieUtils.clearCookie(res, "accessToken", {
+      httpOnly: true,
+      sameSite: "none",
+      secure: true,
+    });
+    refreshTokenClear = await cookieUtils.clearCookie(res, "refreshToken", {
+      httpOnly: true,
+      sameSite: "none",
+      secure: true,
+    });
+    sessionTokenClear = await cookieUtils.clearCookie(
+      res,
+      "better-auth.session_token",
+      {
+        httpOnly: true,
+        sameSite: "none",
+        secure: true,
+      }
+    );
+  }
+
+  if (accessTokenClear && refreshTokenClear && sessionTokenClear) {
+    return result;
+  }
+  return null;
+};
+
+const verifyEmail = async (payload: { email: string; otp: string }) => {
+  const isVerifiedUser = await prisma.user.findUnique({
+    where: { email: payload?.email, emailVerified: true },
+  });
+  if (isVerifiedUser) {
+    throw new Error("User is already verified");
+  }
+  const result = await auth.api.verifyEmailOTP({
+    body: {
+      email: payload?.email,
+      otp: payload?.otp,
+    },
+  });
+
+  if (result?.status && !result?.user?.emailVerified) {
+    await prisma.user.update({
+      where: { email: payload?.email },
+      data: { emailVerified: true },
+    });
+  }
+
+  console.log("emailVerified Result", result);
   return result;
+};
 
-}
-return null;
+const requestPasswordReset = async (email: string) => {
+  const user = await prisma.user.findUnique({
+    where: { email },
+  });
 
+  if (!user) {
+    throw new AppError(status.UNAUTHORIZED, "User not found");
+  }
+  if (!user?.emailVerified) {
+    throw new AppError(status.BAD_REQUEST, "User Email not verified");
+  }
+
+  if (user.status !== UserStatus.ACTIVE || user.isDeleted) {
+    throw new AppError(
+      status.NOT_FOUND,
+      "User is not eligible for password reset"
+    );
+  }
+
+  const data = await auth.api.requestPasswordResetEmailOTP({
+    body: { email },
+  });
+
+  return data;
+};
+
+const resetPassword = async (payload: {
+  email: string;
+  otp: string;
+  password: string;
+}) => {
+  const user = await prisma.user.findUnique({
+    where: { email: payload?.email },
+  });
+
+  if (!user) {
+    throw new AppError(status.UNAUTHORIZED, "User not found");
+  }
+  if (!user?.emailVerified) {
+    throw new AppError(status.BAD_REQUEST, "User Email not verified");
+  }
+
+  if (user.status !== UserStatus.ACTIVE || user.isDeleted) {
+    throw new AppError(
+      status.NOT_FOUND,
+      "User is not eligible for password reset"
+    );
+  }
+
+  const data = await auth.api.resetPasswordEmailOTP({
+    body: {
+      email: payload?.email,
+      otp: payload?.otp,
+      password: payload?.password,
+    },
+  });
+
+  if (data) {
+    await prisma.session.deleteMany({ where: { userId: user?.id } });
+  }
+
+  return data;
 };
 
 export const AuthService = {
@@ -285,5 +377,8 @@ export const AuthService = {
   getProfile,
   getNewToken,
   changePassword,
-  logOut
+  logOut,
+  verifyEmail,
+  requestPasswordReset,
+  resetPassword,
 };

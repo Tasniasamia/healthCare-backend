@@ -113,11 +113,53 @@ const logOut=catchAsyncHandler(async(req:Request,res:Response,)=>{
   });
 })
 
+
+const verifyEmail=catchAsyncHandler(async(req:Request,res:Response,next:NextFunction)=>{
+const payload=await req?.body as {email:string,otp:string}
+const result=await AuthService.verifyEmail(payload );
+return sendResponse(res,{
+  httpStatusCode: status.OK,
+  success: true,
+  message: "Email verified successfully",
+  data: result,
+})
+});
+
+const requestPasswordReset=catchAsyncHandler(async(req:Request,res:Response,next:NextFunction)=>{
+  const {email}=await req?.body as {email:string}
+  const result=await AuthService.requestPasswordReset(email);
+  if(result){
+   return await sendResponse(res,{
+      httpStatusCode: status.OK,
+      success: true,
+      message: "Please eheck your OTP into your email",
+      data: result,
+    });
+  }
+})
+
+const resetPasswordReset=catchAsyncHandler(async(req:Request,res:Response,next:NextFunction)=>{
+const payload=await req?.body as {email:string,otp:string,password:string}
+const result=await AuthService.resetPassword(payload);
+await sendResponse(res,{
+  httpStatusCode: status.OK,
+  success: true,
+  message: "password reset Successfully",
+  data: result,
+})
+})
+
+
+
+
 export const AuthController = {
   registerPatient,
   loginUser,
   getProfile,
   getNewToken,
   changePassword,
-  logOut
+  logOut,
+  verifyEmail,
+  requestPasswordReset,
+  resetPasswordReset
 };

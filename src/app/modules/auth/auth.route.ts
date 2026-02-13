@@ -21,5 +21,7 @@ router.post(
   AuthController.changePassword
 );
 router.get("/logOut",checkAuth(Role.ADMIN, Role.DOCTOR, Role.PATIENT, Role.SUPER_ADMIN), AuthController.logOut);
-
+router.post("/verify-email",AuthController.verifyEmail);
+router.post("/sendOtp",AuthController.requestPasswordReset);
+router.post("/resetPassword",AuthController.resetPasswordReset);
 export const AuthRoutes = router;
