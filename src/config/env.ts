@@ -19,7 +19,10 @@ interface EnvConfig {
   EMAIL_SENDER_SMTP_HOST:string,
   EMAIL_SENDER_SMTP_PORT:string,
   CLIENT_ID:string,
-  CLIENT_SECRET:string
+  CLIENT_SECRET:string,
+  CALLBACK_URL:string,
+  FRONTEND_URL:string
+
 
 
 }
@@ -43,7 +46,9 @@ const loadEnvironmentVariables = (): EnvConfig => {
     "EMAIL_SENDER_SMTP_PORT",
     "EMAIL_SENDER_SMTP_PASS",
     "CLIENT_ID",
-    "CLIENT_SECRET"
+    "CLIENT_SECRET",
+    "CALLBACK_URL",
+    "FRONTEND_URL"
 
   ].forEach((variable) => {
     if (!process?.env?.[variable]) {
@@ -70,7 +75,9 @@ const loadEnvironmentVariables = (): EnvConfig => {
     EMAIL_SENDER_SMTP_HOST:process.env.EMAIL_SENDER_SMTP_HOST as string,
     EMAIL_SENDER_SMTP_PORT:process.env.EMAIL_SENDER_SMTP_PORT as string,
     CLIENT_ID:process.env.CLIENT_ID as string,
-    CLIENT_SECRET:process.env.CLIENT_SECRET as string
+    CLIENT_SECRET:process.env.CLIENT_SECRET as string,
+    CALLBACK_URL:process.env.CALLBACK_URL as string,
+    FRONTEND_URL:process.env.FRONTEND_URL as string
   
   };
 };

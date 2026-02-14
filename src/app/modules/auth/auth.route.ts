@@ -24,4 +24,7 @@ router.get("/logOut",checkAuth(Role.ADMIN, Role.DOCTOR, Role.PATIENT, Role.SUPER
 router.post("/verify-email",AuthController.verifyEmail);
 router.post("/sendOtp",AuthController.requestPasswordReset);
 router.post("/resetPassword",AuthController.resetPasswordReset);
+router.get("/login/google",AuthController.googleLogin);
+router.get("/google/success",AuthController.googleSuccess);
+
 export const AuthRoutes = router;

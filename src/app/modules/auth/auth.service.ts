@@ -378,6 +378,32 @@ const resetPassword = async (payload: {
   return data;
 };
 
+const googleSuccess=async(user:JwtPayload)=>{
+  const  createPatient=await prisma.patient.create({
+ 
+      data: { name: user?.name, email: user?.email, userId: user?.user},
+   
+  });
+  if(createPatient?.id){
+    const accessToken = await tokenUtils.generateAccessToken(
+      user as JwtPayload
+    );
+    const refreshToken = await tokenUtils.generateRefreshToken(
+      user as JwtPayload
+    );
+    return {accessToken,refreshToken}
+  }
+
+  return null
+}
+
+
+
+
+
+
+
+
 export const AuthService = {
   registerPatient,
   loginUser,
@@ -388,4 +414,5 @@ export const AuthService = {
   verifyEmail,
   requestPasswordReset,
   resetPassword,
+  googleSuccess
 };

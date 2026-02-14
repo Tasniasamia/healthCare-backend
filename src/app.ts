@@ -4,17 +4,26 @@ import route from "./app/routes";
 import { globalErrorHandler } from "./app/middleware/globalErrorHandler";
 import { NotfoundHandler } from "./app/middleware/notFoundHandler";
 import cookieParser from "cookie-parser";
+import { toNodeHandler } from "better-auth/node";
+import { auth } from "./app/lib/auth";
+import path from "path";
 
 
 const app:Application=express();
+// app.set("view engine", "ejs");
+// app.set("views", path.join(process.cwd(), "src/app/template"));
+
 app.use(express.json());
 app.use(express.urlencoded({extended:true}));
 app.use(cookieParser());
 
+
 const allowedOrigins = [
-    process.env.APP_URL || "http://localhost:3000",
-    process.env.PROD_APP_URL, // Production frontend URL
-  ].filter(Boolean); // Remove undefined values
+  process.env.APP_URL,
+  process.env.PROD_APP_URL,
+  "http://localhost:3000",
+  "http://localhost:5050",
+].filter(Boolean);
   
   app.use(
     cors({
@@ -40,8 +49,10 @@ const allowedOrigins = [
       exposedHeaders: ["Set-Cookie"],
     }),
   );
-  
+app.all("/api/auth/*splat", toNodeHandler(auth));
+
 app.use('/api/v1',route);
+
 app.use(globalErrorHandler);
 app.use(NotfoundHandler);
 app.get('/',(req:Request,res:Response)=>{
