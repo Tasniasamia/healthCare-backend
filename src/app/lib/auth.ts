@@ -31,6 +31,7 @@ export const auth = betterAuth({
       maxAge: 60 * 60 * 60 * 24,
     },
   },
+
   user: {
     additionalFields: {
       role: {
@@ -61,6 +62,10 @@ export const auth = betterAuth({
       },
     },
   },
+
+
+
+  
   plugins: [
     bearer(),
     emailOTP({

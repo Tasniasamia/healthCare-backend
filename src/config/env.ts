@@ -17,7 +17,10 @@ interface EnvConfig {
   EMAIL_SENDER_SMTP_USER:string,
   EMAIL_SENDER_SMTP_PASS:string,
   EMAIL_SENDER_SMTP_HOST:string,
-  EMAIL_SENDER_SMTP_PORT:string
+  EMAIL_SENDER_SMTP_PORT:string,
+  CLIENT_ID:string,
+  CLIENT_SECRET:string
+
 
 }
 
@@ -39,6 +42,9 @@ const loadEnvironmentVariables = (): EnvConfig => {
     "EMAIL_SENDER_SMTP_HOST",
     "EMAIL_SENDER_SMTP_PORT",
     "EMAIL_SENDER_SMTP_PASS",
+    "CLIENT_ID",
+    "CLIENT_SECRET"
+
   ].forEach((variable) => {
     if (!process?.env?.[variable]) {
       throw new Error(
@@ -62,7 +68,9 @@ const loadEnvironmentVariables = (): EnvConfig => {
     EMAIL_SENDER_SMTP_USER:process.env.EMAIL_SENDER_SMTP_USER as string,
     EMAIL_SENDER_SMTP_PASS:process.env.EMAIL_SENDER_SMTP_PASS as string,
     EMAIL_SENDER_SMTP_HOST:process.env.EMAIL_SENDER_SMTP_HOST as string,
-    EMAIL_SENDER_SMTP_PORT:process.env.EMAIL_SENDER_SMTP_PORT as string
+    EMAIL_SENDER_SMTP_PORT:process.env.EMAIL_SENDER_SMTP_PORT as string,
+    CLIENT_ID:process.env.CLIENT_ID as string,
+    CLIENT_SECRET:process.env.CLIENT_SECRET as string
   
   };
 };

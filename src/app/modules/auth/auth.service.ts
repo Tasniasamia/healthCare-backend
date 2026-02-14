@@ -196,7 +196,6 @@ const changePassword = async (
   payload: TChangePasswordPayload,
   sessionToken: string
 ) => {
-  console.log("payload", payload);
   const session = await auth.api.getSession({
     headers: new Headers({
       Authorization: `Bearer ${sessionToken}`,
@@ -206,6 +205,7 @@ const changePassword = async (
   if (!session) {
     throw new AppError(status.UNAUTHORIZED, "Invalid session token");
   }
+
   const data = await auth.api.changePassword({
     body: {
       newPassword: payload?.newPassword,
@@ -217,6 +217,7 @@ const changePassword = async (
       Authorization: `Bearer ${sessionToken}`,
     }),
   });
+
   if (session.user.needPasswordChanges) {
     await prisma.user.update({
       where: {
@@ -366,6 +367,12 @@ const resetPassword = async (payload: {
 
   if (data) {
     await prisma.session.deleteMany({ where: { userId: user?.id } });
+  }
+  if (user?.needPasswordChanges) {
+    await prisma.user.update({
+      where: { id: user?.id },
+      data: { needPasswordChanges: false },
+    });
   }
 
   return data;
