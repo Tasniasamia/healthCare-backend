@@ -5,7 +5,8 @@ import { sendResponse } from "../../shared/sendResponse";
 
  const createSpeciality= (catchAsyncHandler(async(req:Request,res:Response,next:NextFunction)=>{
   const data=await req.body;
-  const response=await specialityService.createSpeciality(data);
+  const payload={...req.body,icon:req?.file?.path}
+  const response=await specialityService.createSpeciality(payload);
   if(response){
   return await sendResponse(res,{
     success:true,

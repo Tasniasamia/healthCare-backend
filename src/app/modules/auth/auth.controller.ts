@@ -200,45 +200,56 @@ const googleLogin = catchAsyncHandler(
 
 const googleSuccess = catchAsyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
-
-    const redirectURLPath = req?.query["redirectURLPath"];
-    const filterRedirectURLPath = encodeURIComponent(redirectURLPath as string);
-
-
-    const sessionToken=await cookieUtils.getCookie(req,'better-auth.session_token');
+  
+  const redirectURLPath = req?.query["redirectURLPath"];
+  // const filterRedirectURLPath = encodeURIComponent(redirectURLPath as string);
+ const sessionToken=await cookieUtils.getCookie(req,'better-auth.session_token');
     console.log("sessionToken",sessionToken);
     if(!sessionToken){
-      res.redirect(`${envVars.FRONTEND_URL}/login?error=sessionToken_missing`);
+      res.redirect(`${envVars.FRONTEND_URL}/login?error=oAuth_failed`);
 
     }
 
+    // const session = await auth.api.getSession({
+    //   headers: new Headers({
+    //     Authorization: `Bearer ${sessionToken}`,
+    //   }),
+    // });
+    // const session = await auth.api.getSession({
+    
+      // headers: new Headers({
+      //   cookie: req.headers.cookie || "",
+      // }),
+    // });
     const session = await auth.api.getSession({
-      headers: new Headers({
-        Authorization: `Bearer ${sessionToken}`,
-      }),
+      headers:{
+        "Cookie":`better-auth.session_token=${sessionToken}`
+      }
+   
     });
-  
+    
+  console.log('session',session)
     if (!session) {
-      res.redirect(`${envVars.FRONTEND_URL}/login?error=session_not_found`)
+    return  res.redirect(`${envVars.FRONTEND_URL}/login?error=session_not_found`)
     } 
 
     if(session && !session?.user){
-      res.redirect(`${envVars.FRONTEND_URL}/login?error=user_not_found`)
+    return  res.redirect(`${envVars.FRONTEND_URL}/login?error=user_not_found`)
 
     }
 
-    if(session && session?.user){
+    // if(session && session?.user){
       const createPatient=await AuthService.googleSuccess(session?.user);
       if(createPatient){
         tokenUtils.setGenerateAccessTokenCookie(res, createPatient?.accessToken);
         tokenUtils.setGenerateRereshTokenCookie(res, createPatient?.refreshToken);
         tokenUtils.setBetterAuthSessionCookie(res, sessionToken);
       
-        res.redirect(`${envVars.FRONTEND_URL}${filterRedirectURLPath}`)
+      return  res.redirect(`${envVars.FRONTEND_URL}${redirectURLPath}`)
 
       }
 
-    }
+    // }
 
 
 

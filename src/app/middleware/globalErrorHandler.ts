@@ -5,6 +5,7 @@ import z from "zod";
 import type { TErrorSources } from "../interfaces/error.interface";
 import { handleZodError } from "../errorHelplers/handleZodError";
 import { AppError } from "../errorHelplers/appError";
+import { deleteFileFromCloudinary } from "../../config/cloude.config";
 
 export const globalErrorHandler = async (
   error: any,
@@ -30,6 +31,14 @@ export const globalErrorHandler = async (
     errorSources = [...simplifiedError.errorSources];
   }
   else if(error instanceof AppError){
+       if(req.file){
+        await deleteFileFromCloudinary(req.file.path)
+    }
+
+    if(req.files && Array.isArray(req.files) && req.files.length > 0){
+        const imageUrls = req.files.map((file) => file.path);
+        await Promise.all(imageUrls.map(url => deleteFileFromCloudinary(url))); 
+    }
     message = error?.message;
     httpStatusCode = error?.statusCode;
     stack=error?.stack as string
