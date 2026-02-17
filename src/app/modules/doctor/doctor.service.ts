@@ -8,6 +8,9 @@ const getAllDoctor = async () => {
   const result = await prisma.doctor.findMany({
     where: {
       isDeleted: false,
+    
+    
+      
     },
     include: {
       user: true,
