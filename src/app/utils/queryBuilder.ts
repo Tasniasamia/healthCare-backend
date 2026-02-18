@@ -16,7 +16,7 @@ export class QueryBuilder<T, TWhereInput, TIncludeInput> {
   private limit: number = 10;
   private skip: number = 0;
   private sortBy: string | undefined = "createdAt";
-  private sortOrder: "asc" | "des" = "asc";
+  private sortOrder: "asc" | "desc" = "asc";
   private selectFields: Record<string, boolean> = {};
 
   constructor(
@@ -152,10 +152,10 @@ export class QueryBuilder<T, TWhereInput, TIncludeInput> {
         if (parts.length == 2) {
           const [relation, field] = parts;
           queryWhereConditon[relation as string] = {
-            [field as string]: this.parseFilterValue(value),
+            [field as string]: this.parseFilterValue(value)
           };
           countqueryWhereConditon[relation as string] = {
-            [field as string]: this.parseFilterValue(value),
+           [field as string]: this.parseFilterValue(value)
           };
           // return;
           //  result:
@@ -167,7 +167,7 @@ export class QueryBuilder<T, TWhereInput, TIncludeInput> {
           const [relation, nextRelation, field] = parts;
           queryWhereConditon[relation as string] = {
             [nextRelation as string]: {
-              [field as string]: this.parseFilterValue(value),
+             [field as string]: this.parseFilterValue(value),
             },
           };
           countqueryWhereConditon[relation as string] = {
@@ -210,6 +210,7 @@ export class QueryBuilder<T, TWhereInput, TIncludeInput> {
 
     return this;
   }
+  //From my sake
   // filter(): this {
   //   const { filterableFields } = this.config || [];
   
@@ -303,7 +304,119 @@ export class QueryBuilder<T, TWhereInput, TIncludeInput> {
   
   //   return this;
   // }
+  paginate():this{
+    const {page,limit}=this.queryParams;
+    this.page=Number(page);
+    this.limit=Number(limit);
+    this.skip=Number((this.page-1)*this.limit);
+    this.query.take=this.limit;
+    this.query.skip=this.skip;
+    
+    return this;
+   }
+
+   sort():this{
+    const sortBy = this.queryParams.sortBy || 'createdAt';
+    const sortOrder = this.queryParams.sortOrder === 'asc' ? 'asc' : 'desc';
+
+    this.sortBy = sortBy;
+    this.sortOrder = sortOrder;
+
+    // /doctors?sortBy=user.name&sortOrder=asc => orderBy: { user: { name: 'asc' } }
+
+    if(sortBy.includes(".")){
+        const parts = sortBy.split(".");
+
+        if(parts.length === 2){
+            const [relation, nestedField] = parts;
+
+            this.query.orderBy = {
+                [relation as string] : {
+                    [nestedField as string] : sortOrder
+                }
+            }
+        }else if(parts.length === 3){
+            const [relation, nestedRelation, nestedField] = parts;
+
+            this.query.orderBy = {
+                [relation as string] : {
+                    [nestedRelation as string] : {
+                        [nestedField as string] : sortOrder
+                    }
+                }
+            }
+        }else{
+            this.query.orderBy = {
+                [sortBy] : sortOrder
+            }
+        }
+    }else{
+        this.query.orderBy = {
+            [sortBy]: sortOrder
+        }
+    }
+    return this;
+   }
+
+   fields(): this {
+    const { fields } = this.queryParams;
   
+    if (fields && typeof fields === "string") {
+      const fieldsArray = fields.split(",");
+  
+  
+      fieldsArray.forEach((field: string) => {
+        this.selectFields[field.trim()] = true;
+
+
+       
+      });
+      this.query.select = this.selectFields;
+
+      delete this.query?.include;
+    }
+  
+    return this;
+  }
+
+  include(relation:TIncludeInput):this{
+    if(this.selectFields){
+      return this;
+    }
+    this.query.include={...this?.query?.include,...relation}
+
+    return this;
+  }
+  
+  dynamicInclude(includeConfig:Record<string,unknown>,defaultInclude?:string[]):this{
+  
+    const result:Record<string,unknown>={};
+    defaultInclude?.forEach((field)=>{
+      if(includeConfig[field]){
+        result[field]=includeConfig[field];
+      }
+    });
+    if(this?.queryParams?.include){
+      const includeParams=(this.queryParams.include as string)?.split(',');
+      const includeParamsTrimFree=includeParams?.map?.((i)=>i.trim())
+      if(includeParamsTrimFree && includeParamsTrimFree?.length>0){
+       includeParamsTrimFree?.forEach((field)=>{
+        if(includeConfig[field]){
+          result[field]=includeConfig[field];
+        }
+       })
+      }
+    }
+
+    this.query.include={...this.query?.include,...result};
+  
+    return this;
+  }
+
+
+  
+
+
   private parseFilterValue = (value: unknown): unknown => {
     if (value === "true") {
       return true;

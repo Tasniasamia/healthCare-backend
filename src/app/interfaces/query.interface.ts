@@ -6,6 +6,7 @@ take?:number;
 skip?:number;
 cursor?:Record<string,unknown>;
 distinct?:string[]|string;
+select?:Record<string,unknown>
 [key:string]:unknown|undefined
 
 }
