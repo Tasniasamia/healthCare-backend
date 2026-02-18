@@ -68,3 +68,23 @@ export interface prismaStringFilter{
     not ?: prismaStringFilter | string;
 }
 
+export interface prismaQueryFilterType{
+    OR?:Record<string,unknown>;
+    NOT?:Record<string,unknown>;
+    AND?:Record<string,unknown>;
+    
+    [key:string]:unknown|undefined;
+
+}
+
+export interface prismaNumberFilter{
+    equals?:number;
+    in?:number[];
+    notIn?:number[];
+    lt?:number;
+    lte?:number;
+    gt?:number;
+    gte?:number;
+    not?:prismaNumberFilter | number
+
+}
