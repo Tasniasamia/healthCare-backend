@@ -6,7 +6,7 @@ import { sendResponse } from "../../shared/sendResponse";
 import { AppError } from "../../errorHelplers/appError";
 
 const getAllDoctor=catchAsyncHandler(async(req:Request,res:Response)=>{
-   const result=await doctorService.getAllDoctor() ;
+   const result=await doctorService.getAllDoctor(req?.query as Record<string,unknown>) ;
    sendResponse(res, {
     httpStatusCode: status.OK,
     success: true,

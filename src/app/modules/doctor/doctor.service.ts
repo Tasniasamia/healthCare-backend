@@ -3,26 +3,57 @@ import { AppError } from "../../errorHelplers/appError";
 import { prisma } from "../../lib/prisma";
 import type { TUpdateDoctorPayload } from "./doctor.interface";
 import { Role, UserStatus } from "../../../generated/prisma/enums";
+import { QueryBuilder } from "../../utils/queryBuilder";
+import type { doctor, Prisma } from "../../../generated/prisma/client";
+import type { doctorInclude, doctorWhereInput } from "../../../generated/prisma/models";
+import { DoctorScalarFieldEnum } from "../../../generated/prisma/internal/prismaNamespace";
+import { doctorFilterableFields, doctorSearchableFields } from "./doctor.constant";
 
-const getAllDoctor = async () => {
-  const result = await prisma.doctor.findMany({
-    where: {
-      isDeleted: false,
+const getAllDoctor = async (query:Record<string,unknown>) => {
+  const queryBuilder = new QueryBuilder<doctor,doctorWhereInput,doctorInclude>(
+    prisma.doctor,
+    query,
+    {
+        searchableFields: doctorSearchableFields,
+        filterableFields: doctorFilterableFields,
+    }
+)
+
+const result = await queryBuilder
+    .search()
+    .filter()
+    .where({
+        isDeleted: false,
+    })
+    .include({
+        user: true,
+      
+    })
+    .paginate()
+    .sort()
+    .fields()
+    .execute();
+
+    console.log(result);
+return result;
+  // const result = await prisma.doctor.findMany({
+  //   where: {
+  //     isDeleted: false,
     
     
       
-    },
-    include: {
-      user: true,
-      specialities: {
-        include: {
-          specialty: true,
-        },
-      },
-    },
-  });
+  //   },
+  //   include: {
+  //     user: true,
+  //     specialities: {
+  //       include: {
+  //         specialty: true,
+  //       },
+  //     },
+  //   },
+  // });
 
-  return result;
+  // return result;
 };
 
 const getDoctorById = async (id: string) => {

@@ -15,7 +15,7 @@ export class QueryBuilder<T, TWhereInput, TIncludeInput> {
   private page: number = 1;
   private limit: number = 10;
   private skip: number = 0;
-  private sortBy: string | undefined = "createdAt";
+  private sortBy: string | undefined = "createAt";
   private sortOrder: "asc" | "desc" = "asc";
   private selectFields: Record<string, boolean> = {};
 
@@ -39,6 +39,7 @@ export class QueryBuilder<T, TWhereInput, TIncludeInput> {
       skip: this.skip,
     };
   }
+  //where method
   search(): this {
     const { searchItem } = this.queryParams;
     const { searchableFields } = this.config;
@@ -47,7 +48,7 @@ export class QueryBuilder<T, TWhereInput, TIncludeInput> {
         (field: any) => {
           const stringFilter: prismaStringFilter = {
             contains: searchItem,
-            mode: "intensitive" as const,
+            mode: "insensitive" as const,
           };
           if (field.includes(".")) {
             const parts = field.split(".");
@@ -110,6 +111,8 @@ export class QueryBuilder<T, TWhereInput, TIncludeInput> {
   //        }}
   //     }
   // }
+
+  //where method
   filter(): this {
     const { filterableFields } = this.config || [];
 
@@ -131,7 +134,7 @@ export class QueryBuilder<T, TWhereInput, TIncludeInput> {
     });
 
     const queryWhereConditon = this.query.where as Record<string, unknown>;
-    const countqueryWhereConditon = this.query.where as Record<string, unknown>;
+    const countqueryWhereConditon = this.count.where as prismaQueryConditonType;
     Object.keys(filterParams).forEach((key: string) => {
       const value = filterParams[key];
       if (value === "" || value === undefined) {
@@ -304,19 +307,25 @@ export class QueryBuilder<T, TWhereInput, TIncludeInput> {
   
   //   return this;
   // }
-  paginate():this{
-    const {page,limit}=this.queryParams;
-    this.page=Number(page);
-    this.limit=Number(limit);
-    this.skip=Number((this.page-1)*this.limit);
-    this.query.take=this.limit;
-    this.query.skip=this.skip;
-    
-    return this;
-   }
 
+  paginate(): this {
+    const { page, limit } = this.queryParams;
+  
+    this.page = Number(page) > 0 ? Number(page) : 1;
+    this.limit = Number(limit) > 0 ? Number(limit) : 10;
+  
+    this.skip = (this.page - 1) * this.limit;
+  
+    this.query.take = this.limit;
+    this.query.skip = this.skip;
+  
+    return this;
+  }
+  
+
+   //orderby method
    sort():this{
-    const sortBy = this.queryParams.sortBy || 'createdAt';
+    const sortBy = (this.queryParams.sortBy as string)?.trim() || "createAt";
     const sortOrder = this.queryParams.sortOrder === 'asc' ? 'asc' : 'desc';
 
     this.sortBy = sortBy;
@@ -358,6 +367,7 @@ export class QueryBuilder<T, TWhereInput, TIncludeInput> {
     return this;
    }
 
+   //select method
    fields(): this {
     const { fields } = this.queryParams;
   
@@ -380,16 +390,20 @@ export class QueryBuilder<T, TWhereInput, TIncludeInput> {
   }
 
   include(relation:TIncludeInput):this{
-    if(this.selectFields){
+    if (Object.keys(this.selectFields).length > 0) {
       return this;
     }
+    
     this.query.include={...this?.query?.include,...relation}
 
     return this;
   }
   
   dynamicInclude(includeConfig:Record<string,unknown>,defaultInclude?:string[]):this{
-  
+    if (Object.keys(this.selectFields).length > 0) {
+      return this;
+    }
+    
     const result:Record<string,unknown>={};
     defaultInclude?.forEach((field)=>{
       if(includeConfig[field]){
@@ -413,8 +427,51 @@ export class QueryBuilder<T, TWhereInput, TIncludeInput> {
     return this;
   }
 
-
+where(condtions:TWhereInput):this{
+  this.query.where={...this.query.where,...condtions};
+  this.count.where={...this.count.where,...condtions};
+  return this;
+}
   
+// async execute() : Promise<any> {
+//   const [ total,data] = await Promise.all([
+//       this.model.count(this.count.where),
+//       this.model.findMany(this.query as Parameters<typeof this.model.findMany>[0])
+//   ])
+
+//   const totalPages = Math.ceil(total / this.limit);
+
+//   return {
+//       data : data,
+//       meta : {
+//           page : this.page,
+//           limit : this.limit,
+//           total,
+//           totalPages,
+//       }
+//   }
+
+// }
+async execute(): Promise<any> {
+  const [total, data] = await Promise.all([
+    this.model.count({
+      where: this.count.where
+    }),
+    this.model.findMany(this.query)
+  ]);
+
+  const totalPages = Math.ceil(total / this.limit);
+
+  return {
+    data,
+    meta: {
+      page: this.page,
+      limit: this.limit,
+      total,
+      totalPages,
+    },
+  };
+}
 
 
   private parseFilterValue = (value: unknown): unknown => {

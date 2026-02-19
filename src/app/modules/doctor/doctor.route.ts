@@ -6,7 +6,7 @@ import { doctorSchema } from "./doctor.validation";
 import { validationRequest } from "../../middleware/validationRequest";
 
 const route = Router();
-route.get("/",checkAuth(Role.ADMIN,Role.SUPER_ADMIN),  doctorController.getAllDoctor);
+route.get("/", doctorController.getAllDoctor);
 route.get("/:id",checkAuth(Role.ADMIN,Role.SUPER_ADMIN),  doctorController.getDoctorById);
 route.put(
   "/:id",
