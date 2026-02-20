@@ -5,6 +5,7 @@ import { userRoutes } from "../modules/user/user.route";
 import { doctorRoutes } from "../modules/doctor/doctor.route";
 import { adminRoutes } from "../modules/admin/admin.route";
 import { superAdminRoutes } from "../modules/superAdmin/superAdmin.route";
+import { scheduleRoutes } from "../modules/schedule/schedule.route";
 
 
 
@@ -34,6 +35,10 @@ const allRoutes=[
     {
         path:'/super-admin',
         handler:superAdminRoutes
+    },
+    {
+        path:'/schedule',
+        handler:scheduleRoutes
     }
 
 ]
