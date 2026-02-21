@@ -9,7 +9,7 @@ import { scheduleController } from "./schedule.controller";
 const router = Router();
 
 router.post('/', validationRequest(scheduleSchema.createScheduleSchema) , scheduleController.createSchedule);
-router.get('/',checkAuth(Role.ADMIN, Role.SUPER_ADMIN,Role.DOCTOR),scheduleController.getSchedule);
+router.get('/',scheduleController.getSchedule);
 router.get('/:id', checkAuth(Role.ADMIN, Role.SUPER_ADMIN,Role.DOCTOR), scheduleController.getScheduleById);
 
 router.patch('/:id', checkAuth(Role.ADMIN, Role.SUPER_ADMIN), validationRequest(scheduleSchema.createScheduleSchema), scheduleController.updateSchedule);

@@ -21,7 +21,7 @@ const getAllDoctor = async (query:IQueryParams) => {
 )
 
 const result = await queryBuilder
-    .search()
+    // .search()
     .filter()
     .where({
         isDeleted: false,

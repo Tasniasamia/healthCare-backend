@@ -6,6 +6,7 @@ import { doctorRoutes } from "../modules/doctor/doctor.route";
 import { adminRoutes } from "../modules/admin/admin.route";
 import { superAdminRoutes } from "../modules/superAdmin/superAdmin.route";
 import { scheduleRoutes } from "../modules/schedule/schedule.route";
+import { doctorscheduleRoutes } from "../modules/doctorSchedule/doctorSchedule.route";
 
 
 
@@ -39,6 +40,10 @@ const allRoutes=[
     {
         path:'/schedule',
         handler:scheduleRoutes
+    },
+    {
+        path:'/doctor-schedule',
+        handler:doctorscheduleRoutes
     }
 
 ]
