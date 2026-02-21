@@ -9,8 +9,9 @@ const createSchedule = async (payload: ICreateSchedulePayload) => {
   const lastDate = new Date(endDate);
   const interval = 30;
   const schedules=[];
+  let result;
   while (currentDate <= lastDate) {
-    const startDateTime = new Date(
+    const startDateTimeFormat = new Date(
       addMinutes(
         addHours(
           `${format(new Date(currentDate), "yyyy-MM-dd")}`,
@@ -19,7 +20,7 @@ const createSchedule = async (payload: ICreateSchedulePayload) => {
         Number(startTime.split(":")[1])
       )
     );
-    const endDateTime = new Date(
+    const endDateTimeFormat = new Date(
         addMinutes(
           addHours(
             `${format(new Date(currentDate), "yyyy-MM-dd")}`,
@@ -28,9 +29,9 @@ const createSchedule = async (payload: ICreateSchedulePayload) => {
           Number(endTime.split(":")[1])
         )
       );
-    while(startDateTime<= endDateTime){
-     const startTime1=await convertDateTime(new Date(startDateTime));
-     const endTime1=await convertDateTime(new Date(addMinutes(new Date(startDateTime),interval)));
+    while(startDateTimeFormat< endDateTimeFormat){
+     const startTime1=await convertDateTime(new Date(startDateTimeFormat));
+     const endTime1=await convertDateTime(addMinutes(new Date(startDateTimeFormat),interval));
      
     const existSchedule=await prisma.schedule.findFirst({
         where:{
@@ -40,20 +41,25 @@ const createSchedule = async (payload: ICreateSchedulePayload) => {
     })
 
     if(!existSchedule){
-        const result=await prisma.schedule.create({
+         result=await prisma.schedule.create({
             data:{
-                startDateTime:startDateTime,
-                endDateTime:endDateTime
+                startDateTime:startTime1,
+                endDateTime:endTime1
             }
         });
         schedules.push(result);
     }
      
 
-        startDateTime.setMinutes(startDateTime.getMinutes()+interval)
+        startDateTimeFormat.setMinutes(startDateTimeFormat.getMinutes()+interval)
     }
       
       currentDate.setDate(currentDate.getDate()+1);
+  }
+
+
+  if(schedules.length>0){
+    return {result,schedules}
   }
 };
 

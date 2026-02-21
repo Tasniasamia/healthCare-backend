@@ -8,5 +8,5 @@ import { scheduleController } from "./schedule.controller";
 
 const router = Router();
 
-router.post('/', checkAuth(Role.ADMIN, Role.SUPER_ADMIN), validationRequest(scheduleSchema.createScheduleZodSchema) , scheduleController.createSchedule);
+router.post('/',  validationRequest(scheduleSchema.createScheduleSchema) , scheduleController.createSchedule);
 export const scheduleRoutes = router;
