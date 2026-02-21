@@ -66,6 +66,7 @@ const updateDoctorSchedule = async (
     for (let idx of filterdeletedoctorScheduleList) {
       const existingSchedule = await prisma.doctorSchedules.findFirst({
         where: {
+          isBooked:false,
           scheduleId: idx?.id,
           doctorId: isDoctorExist.id,
         },
@@ -96,6 +97,7 @@ const updateDoctorSchedule = async (
           },
         },
         update: {
+            
         },
         create: {
           doctorId: isDoctorExist.id,
