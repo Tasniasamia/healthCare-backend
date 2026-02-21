@@ -8,11 +8,12 @@ import type { doctor, Prisma } from "../../../generated/prisma/client";
 import type { doctorInclude, doctorWhereInput } from "../../../generated/prisma/models";
 import { DoctorScalarFieldEnum } from "../../../generated/prisma/internal/prismaNamespace";
 import { doctorFilterableFields, doctorSearchableFields } from "./doctor.constant";
+import type { IQueryParams } from "../../interfaces/query.interface";
 
-const getAllDoctor = async (query:Record<string,unknown>) => {
+const getAllDoctor = async (query:IQueryParams) => {
   const queryBuilder = new QueryBuilder<doctor,doctorWhereInput,doctorInclude>(
     prisma.doctor,
-    query,
+    query as IQueryParams,
     {
         searchableFields: doctorSearchableFields,
         filterableFields: doctorFilterableFields,
