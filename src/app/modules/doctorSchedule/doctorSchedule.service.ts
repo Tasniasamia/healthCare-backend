@@ -6,6 +6,14 @@ import type {
   IUpdatedoctorSchedulePayload,
 } from "./doctorSchedule.interface";
 import type { JwtPayload } from "jsonwebtoken";
+import type { IQueryParams } from "../../interfaces/query.interface";
+import { QueryBuilder } from "../../utils/queryBuilder";
+import type {
+  DoctorSchedulesInclude,
+  DoctorSchedulesWhereInput,
+} from "../../../generated/prisma/models";
+import type { DoctorSchedules } from "../../../generated/prisma/browser";
+import { doctorSchedulefilterableFields, doctorScheduleSearchableFields } from "./doctorSchedule.constant";
 
 const createDoctorSchedule = async (
   user: JwtPayload,
@@ -22,7 +30,6 @@ const createDoctorSchedule = async (
   const existingSchedules = await prisma.schedule.findMany({
     where: {
       id: { in: scheduleId },
-      
     },
   });
 
@@ -41,72 +48,88 @@ const createDoctorSchedule = async (
   return result;
 };
 
+const getDoctorSchedule = async (query: IQueryParams) => {
+  const queryBuilder = new QueryBuilder<
+    DoctorSchedules,
+    DoctorSchedulesWhereInput,
+    DoctorSchedulesInclude
+  >(prisma.doctorSchedules, query as IQueryParams, {
+    searchableFields: doctorScheduleSearchableFields,
+    filterableFields: doctorSchedulefilterableFields,
+  });
+  await queryBuilder.search().filter().paginate().dynamicInclude().include({schedule:{include:{appointments:true}}})
+};
+
 const updateDoctorSchedule = async (
-    user: JwtPayload,
-    payload: IUpdatedoctorSchedulePayload
-  ) => {
-    const { scheduleId } = payload;
-  
-    const isDoctorExist = await prisma.doctor.findFirst({
-      where: { email: user?.email },
+  user: JwtPayload,
+  payload: IUpdatedoctorSchedulePayload
+) => {
+  const { scheduleId } = payload;
+
+  const isDoctorExist = await prisma.doctor.findFirst({
+    where: { email: user?.email },
+  });
+
+  if (!isDoctorExist) {
+    throw new AppError(status.UNAUTHORIZED, "Doctor doesn't exist here");
+  }
+
+  const filterdeletedoctorScheduleList = scheduleId?.filter(
+    (i: { id: string; shouldDelete: boolean }) => i?.shouldDelete
+  );
+
+  const filterUpdatedoctorScheduleList = scheduleId?.filter(
+    (i: { id: string; shouldDelete: boolean }) => !i?.shouldDelete
+  );
+
+  for (let idx of filterdeletedoctorScheduleList) {
+    const existingSchedule = await prisma.doctorSchedules.findFirst({
+      where: {
+        isBooked: false,
+        scheduleId: idx?.id,
+        doctorId: isDoctorExist.id,
+      },
     });
-  
-    if (!isDoctorExist) {
-      throw new AppError(status.UNAUTHORIZED, "Doctor doesn't exist here");
-    }
-  
-    const filterdeletedoctorScheduleList = scheduleId?.filter(
-      (i: { id: string; shouldDelete: boolean }) => i?.shouldDelete
-    );
-  
-    const filterUpdatedoctorScheduleList = scheduleId?.filter(
-      (i: { id: string; shouldDelete: boolean }) => !i?.shouldDelete
-    );
 
-    for (let idx of filterdeletedoctorScheduleList) {
-      const existingSchedule = await prisma.doctorSchedules.findFirst({
-        where: {
-          isBooked:false,
-          scheduleId: idx?.id,
-          doctorId: isDoctorExist.id,
-        },
-      });
-  
-      if (existingSchedule) {
-        await prisma.doctorSchedules.delete({
-          where: {
-            doctorId_scheduleId: {
-              doctorId: isDoctorExist.id,
-              scheduleId: idx?.id,
-            },
-          },
-        });
-      } else {
-        throw new AppError(status.BAD_REQUEST,`Schedule ${idx?.id} not found, skipping delete`); 
-      }
-    }
-  
-
-    let result;
-    for (let idx of filterUpdatedoctorScheduleList) {
-      result = await prisma.doctorSchedules.upsert({
+    if (existingSchedule) {
+      await prisma.doctorSchedules.delete({
         where: {
           doctorId_scheduleId: {
             doctorId: isDoctorExist.id,
-            scheduleId: idx.id,
+            scheduleId: idx?.id,
           },
         },
-        update: {
-            
-        },
-        create: {
-          doctorId: isDoctorExist.id,
-          scheduleId: idx?.id,
-        },
       });
+    } else {
+      throw new AppError(
+        status.BAD_REQUEST,
+        `Schedule ${idx?.id} not found, skipping delete`
+      );
     }
-  
-    return result;
-  }; 
+  }
 
-export const doctorScheduleService = { createDoctorSchedule ,updateDoctorSchedule};
+  let result;
+  for (let idx of filterUpdatedoctorScheduleList) {
+    result = await prisma.doctorSchedules.upsert({
+      where: {
+        doctorId_scheduleId: {
+          doctorId: isDoctorExist.id,
+          scheduleId: idx.id,
+        },
+      },
+      update: {},
+      create: {
+        doctorId: isDoctorExist.id,
+        scheduleId: idx?.id,
+      },
+    });
+  }
+
+  return result;
+};
+
+export const doctorScheduleService = {
+  createDoctorSchedule,
+  updateDoctorSchedule,
+  getDoctorSchedule
+};
