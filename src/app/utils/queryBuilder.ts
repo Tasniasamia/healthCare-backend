@@ -1,3 +1,4 @@
+import { fi } from "zod/locales";
 import {type IQueryParams,type IQueryResult,type PrismaCountArgs,type PrismaFindManyArgs,type PrismaModelDelegate,type PrismaNumberFilter,type PrismaStringFilter,type PrismaWhereConditions, type IQueryConfig } from "../interfaces/query.interface";
 
 // T = Model Type
@@ -312,6 +313,10 @@ TInclude = Record<string, unknown>
         defaultInclude ?: string[]
     ) : this{
 
+
+        console.log("includeConfig",includeConfig);
+        console.log("defaultInclude",defaultInclude);
+
         if(this.selectFields){
             return this;
         }
@@ -319,10 +324,14 @@ TInclude = Record<string, unknown>
         const result : Record<string, unknown> = {};
 
         defaultInclude?.forEach((field) => {
+       
+        console.log("field",field);
+        console.log("includeConfig[field]",includeConfig[field])
             if(includeConfig[field]){
                 result[field] = includeConfig[field];
             }
         })
+        console.log("result",result);
 
         const includeParam = this.queryParams.include as string | undefined;
 
@@ -335,6 +344,8 @@ TInclude = Record<string, unknown>
                 }
             })
         }
+
+        console.log("result",result);
 
         this.query.include = {...(this.query.include as Record<string, unknown>), ...result };
 

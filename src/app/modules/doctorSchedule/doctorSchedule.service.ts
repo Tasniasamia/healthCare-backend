@@ -8,12 +8,15 @@ import type {
 import type { JwtPayload } from "jsonwebtoken";
 import type { IQueryParams } from "../../interfaces/query.interface";
 import { QueryBuilder } from "../../utils/queryBuilder";
-import type {
-  DoctorSchedulesInclude,
-  DoctorSchedulesWhereInput,
-} from "../../../generated/prisma/models";
-import type { DoctorSchedules } from "../../../generated/prisma/browser";
-import { doctorSchedulefilterableFields, doctorScheduleSearchableFields } from "./doctorSchedule.constant";
+
+import {
+  createdoctorSchduleConfig,
+  createdoctorSchduledefaultIncludeConfig,
+  doctorSchedulefilterableFields,
+  doctorScheduleSearchableFields,
+} from "./doctorSchedule.constant";
+import type { DoctorSchedules } from "../../../generated/prisma/client";
+import type { DoctorSchedulesWhereInput ,DoctorSchedulesInclude} from "../../../generated/prisma/models";
 
 const createDoctorSchedule = async (
   user: JwtPayload,
@@ -54,12 +57,57 @@ const getDoctorSchedule = async (query: IQueryParams) => {
     DoctorSchedulesWhereInput,
     DoctorSchedulesInclude
   >(prisma.doctorSchedules, query as IQueryParams, {
+    filterableFields: doctorSchedulefilterableFields,
+    searchableFields: doctorScheduleSearchableFields,
+
+  });
+  const result = await queryBuilder
+    .search()
+    .filter()
+    // .include({schedule:true,doctor:true})
+    .dynamicInclude(createdoctorSchduleConfig,createdoctorSchduledefaultIncludeConfig)
+    .paginate()
+
+    .execute();
+  return result;
+};
+
+const getMySchedule=async(query:IQueryParams,user:JwtPayload)=>{
+    const doctor=await prisma.doctor.findFirst({where:{email:user?.email}});
+    const queryBuilder = new QueryBuilder<
+    DoctorSchedules,
+    DoctorSchedulesWhereInput,
+    DoctorSchedulesInclude
+  >(prisma.doctorSchedules, {...query,doctorId:doctor?.id}, {
     searchableFields: doctorScheduleSearchableFields,
     filterableFields: doctorSchedulefilterableFields,
   });
-  await queryBuilder.search().filter().paginate().dynamicInclude().include({schedule:{include:{appointments:true}}})
-};
+  const result = await queryBuilder
+    .search()
+    .filter()
+    .paginate()
+    .dynamicInclude(createdoctorSchduleConfig,createdoctorSchduledefaultIncludeConfig)
+    .execute();
+  return result;
+}
 
+const getDoctorScheduleById=async(query:IQueryParams)=>{
+    const queryBuilder = new QueryBuilder<
+    DoctorSchedules,
+    DoctorSchedulesWhereInput,
+    DoctorSchedulesInclude
+  >(prisma.doctorSchedules, {...query}, {
+    searchableFields: doctorScheduleSearchableFields,
+    filterableFields: doctorSchedulefilterableFields,
+  });
+  const result = await queryBuilder
+    .search()
+    .filter()
+    .dynamicInclude(createdoctorSchduleConfig,createdoctorSchduledefaultIncludeConfig)
+    .execute();
+  return result;
+
+}
 const updateDoctorSchedule = async (
   user: JwtPayload,
   payload: IUpdatedoctorSchedulePayload
@@ -131,5 +179,7 @@ const updateDoctorSchedule = async (
 export const doctorScheduleService = {
   createDoctorSchedule,
   updateDoctorSchedule,
-  getDoctorSchedule
+  getDoctorSchedule,
+  getMySchedule,
+  getDoctorScheduleById
 };

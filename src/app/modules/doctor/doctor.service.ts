@@ -31,6 +31,7 @@ const result = await queryBuilder
       
     })
     .paginate()
+    // .dynamicInclude()
     .sort()
     .fields()
     .execute();
