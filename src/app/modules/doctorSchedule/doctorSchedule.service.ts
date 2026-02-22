@@ -176,10 +176,31 @@ const updateDoctorSchedule = async (
   return result;
 };
 
+const deleteMyDoctorSchedule = async (schduleId: string, user: JwtPayload) => {
+  const doctorData = await prisma.doctor.findFirstOrThrow({
+    where: {
+        email: user?.email as string
+    }
+});
+
+const result=await prisma.doctorSchedules.delete({
+    where: {
+        isBooked: false,
+        doctorId_scheduleId:{
+          doctorId:doctorData?.id,
+          scheduleId:schduleId
+        }
+    }
+});
+
+return result;
+}
+
 export const doctorScheduleService = {
   createDoctorSchedule,
   updateDoctorSchedule,
   getDoctorSchedule,
   getMySchedule,
-  getDoctorScheduleById
+  getDoctorScheduleById,
+  deleteMyDoctorSchedule
 };

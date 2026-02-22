@@ -92,10 +92,27 @@ const udpateDoctorSchedule = catchAsyncHandler(
     });
   }
 );
+
+
+const deleteMyDoctorSchedule = catchAsyncHandler(
+  async (req: Request, res: Response) => {
+  const id = req.params.schduleId;
+  const user = req.user;
+ const result= await doctorScheduleService.deleteMyDoctorSchedule(id as string, user);
+if(!result){
+  throw new AppError(status.BAD_REQUEST,'Failed to delete Doctor schedule')
+}
+  sendResponse(res, {
+      success: true,
+      httpStatusCode: status.OK,
+      message: 'Doctor schedule deleted successfully',
+  });
+});
 export const doctorScheduleController = {
   createDoctorSchedule,
   udpateDoctorSchedule,
   getDoctorSchedule,
   getMySchedule,
-  getDoctorScheduleById
+  getDoctorScheduleById,
+  deleteMyDoctorSchedule
 };
