@@ -25,7 +25,9 @@ interface EnvConfig {
   CLOUDINARY_CLOUD_NAME:string,
   CLOUDINARY_API_KEY:string,
   CLOUDINARY_API_SECRET:string,
-
+  STRIPE_PUBLISHABLE_KEY:string,
+  STRIPE_SECRET_KEY:string,
+  WEBHOOK_SIGNING_SECRET:string
 
 
 }
@@ -54,7 +56,10 @@ const loadEnvironmentVariables = (): EnvConfig => {
     "FRONTEND_URL",
     "CLOUDINARY_CLOUD_NAME",
     "CLOUDINARY_API_KEY",
-    "CLOUDINARY_API_SECRET"
+    "CLOUDINARY_API_SECRET",
+    "STRIPE_PUBLISHABLE_KEY",
+    "STRIPE_SECRET_KEY",
+    "WEBHOOK_SIGNING_SECRET"
 
   ].forEach((variable) => {
     if (!process?.env?.[variable]) {
@@ -86,8 +91,10 @@ const loadEnvironmentVariables = (): EnvConfig => {
     FRONTEND_URL:process.env.FRONTEND_URL as string,
     CLOUDINARY_API_KEY:process.env.CLOUDINARY_API_KEY as string,
     CLOUDINARY_API_SECRET:process.env.CLOUDINARY_API_SECRET as string,
-    CLOUDINARY_CLOUD_NAME:process.env.CLOUDINARY_CLOUD_NAME as string
-  
+    CLOUDINARY_CLOUD_NAME:process.env.CLOUDINARY_CLOUD_NAME as string,
+    STRIPE_PUBLISHABLE_KEY:process.env.STRIPE_PUBLISHABLE_KEY as string,
+  STRIPE_SECRET_KEY:process.env.STRIPE_SECRET_KEY as string,
+  WEBHOOK_SIGNING_SECRET:process.env.WEBHOOK_SIGNING_SECRET as string
 
   };
 };

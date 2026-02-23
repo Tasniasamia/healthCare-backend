@@ -1,6 +1,10 @@
-import type { AppointmentStatus } from "../../../generated/prisma/enums"
+import type { AppointmentStatus } from "../../../generated/prisma/enums";
 
-export interface ICreateBookAppointment{
-    doctorId:string,
-    schduleId:string,
+export interface ICreateBookAppointment {
+  doctorId: string;
+  schduleId: string;
+}
+export interface TStripePayload {
+  appointmentId: string;
+  doctorId: string;
 }

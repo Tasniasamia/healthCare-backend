@@ -26,6 +26,51 @@ const bookAppointment = catchAsyncHandler(
     });
   }
 );
+// initiatePayment
+
+const bookAppointmentWithPayLater = catchAsyncHandler(
+  async (req: Request, res: Response) => {
+    const payload = req.body;
+    const result = await appointmentService.bookAppointmentWithPayLater(
+      req?.user as JwtPayload,
+      payload
+    );
+
+    if (!result) {
+      throw new AppError(status.BAD_REQUEST, "Failed to create appointment");
+    }
+    sendResponse(res, {
+      success: true,
+      httpStatusCode: status.CREATED,
+      message: "Appointment create successfully",
+      data: result,
+    });
+  }
+);
+
+const initiatePayment = catchAsyncHandler(
+  async (req: Request, res: Response) => {
+    const payload = req.body;
+    const result = await appointmentService.initiatePayment(
+      req?.user as JwtPayload,
+      payload
+    );
+
+    if (!result) {
+      throw new AppError(status.BAD_REQUEST, "Failed to make payment");
+    }
+    sendResponse(res, {
+      success: true,
+      httpStatusCode: status.CREATED,
+      message: "You have paid successfully",
+      data: result,
+    });
+  }
+);
+
+
+
+
 const changeAppointmentStatus = catchAsyncHandler(
   async (req: Request, res: Response) => {
     const { id } = await req?.params;
@@ -90,5 +135,7 @@ export const appointmentController = {
   changeAppointmentStatus,
   getMyAppointment,
   getAllAppointment,
-  getBySingleId
+  getBySingleId,
+  bookAppointmentWithPayLater,
+  initiatePayment
 };

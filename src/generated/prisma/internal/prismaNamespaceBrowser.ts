@@ -206,6 +206,7 @@ export const PaymentScalarFieldEnum = {
   paymentGatewayData: 'paymentGatewayData',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
+  stripeEventId: 'stripeEventId',
   appointmentId: 'appointmentId'
 } as const
 

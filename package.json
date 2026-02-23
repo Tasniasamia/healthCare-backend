@@ -12,7 +12,8 @@
     "pull": "prisma db pull",
     "push": "prisma db push",
     "studio": "prisma studio",
-    "reset": "prisma migrate reset"
+    "reset": "prisma migrate reset",
+    "stripe:webhook": "stripe listen --forward-to localhost:5050/webhook"
   },
   "keywords": [],
   "author": "",
@@ -36,8 +37,10 @@
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.0.2",
     "multer-storage-cloudinary": "^4.0.0",
+    "node-cron": "^4.2.1",
     "nodemailer": "^8.0.1",
     "nodemon": "^3.1.11",
+    "stripe": "^20.3.1",
     "ts-node": "^10.9.2",
     "tsup": "^8.5.1",
     "tsx": "^4.21.0",

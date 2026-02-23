@@ -3,7 +3,7 @@
 
 
 model Appointment {
-    id             String            @id @default(uuid(7))
+    id             String            @id @default(uuid(7)) 
     videoCallingId String    @unique
     status         AppointmentStatus @default(SCHEDULED)
     paymentStatus  PaymentStatus     @default(UNPAID)

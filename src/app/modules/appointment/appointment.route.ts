@@ -14,6 +14,18 @@ router.post(
   validationRequest(appointmentSchema.bookAppointmentSchema),
   appointmentController.bookAppointment
 );
+router.post(
+  "/withoutPayment",
+  checkAuth(Role.PATIENT),
+  validationRequest(appointmentSchema.bookAppointmentSchema),
+  appointmentController.bookAppointmentWithPayLater
+);
+router.post(
+  "/payment",
+  checkAuth(Role.PATIENT),
+  validationRequest(appointmentSchema.paymentInitiateSchema),
+  appointmentController.initiatePayment
+);
 router.patch(
   "/:id",
   checkAuth(Role.ADMIN, Role.SUPER_ADMIN, Role.DOCTOR, Role.PATIENT),
