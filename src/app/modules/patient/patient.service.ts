@@ -3,6 +3,8 @@ import type { IUpdatePatientProfile } from "./patient.interface";
 import { prisma } from "../../lib/prisma";
 import { AppError } from "../../errorHelplers/appError";
 import { deleteFileFromCloudinary } from "../../../config/cloude.config";
+import { he } from "zod/locales";
+import { convertDateTime } from "../schedule/schedule.utils";
 
 const updatePatientProfile = async (
   authUser: JwtPayload,
@@ -35,6 +37,12 @@ const updatePatientProfile = async (
         data: { ...patientInfo },
       });
       if (updatePatient) {
+        // if (payload?.patientHealth?.dateOfBirth) {
+        //     healthData.dateOfBirth = convertDateTime(
+        //         typeof healthData.dateOfBirth === "string" ? healthData.dateOfBirth : 'undefined'
+        //     ) as any;
+        // }
+
         const updatePatientHealth = await tx.patientHealthData.upsert({
           where: { patientId: updatePatient.id },
           update: {
@@ -73,6 +81,8 @@ const updatePatientProfile = async (
             });
           }
         }
+          return { user: updateUser, patient: updatePatient, patientHealth: updatePatientHealth };
+        
       }
     }
   });
