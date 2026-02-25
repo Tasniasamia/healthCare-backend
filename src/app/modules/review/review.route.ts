@@ -12,4 +12,18 @@ router.post(
   validationRequest(reviewSchema.createReviewSchema),
   reviewController.giveReview
 );
+router.patch(
+  "/:id",
+  checkAuth(Role.PATIENT),
+  validationRequest(reviewSchema.updateReviewSchema),
+  reviewController.updateReview
+);
+router.delete(
+  "/:id",
+  checkAuth(Role.PATIENT),
+  reviewController.deleteReview
+);
+router.get('/',checkAuth(Role.ADMIN,Role.SUPER_ADMIN),reviewController.getAllReviews);
+router.get('/my_review',checkAuth(Role.DOCTOR,Role.PATIENT),reviewController.getAllReviews);
+
 export const reviewRoutes = router;
