@@ -60,6 +60,7 @@ export const uploadFileToCloudinary = async (
 }
 
 export const deleteFileFromCloudinary = async (file_url: string) => {
+    console.log("file_url",file_url);
     const regex = /\/v\d+\/(.+?)(?:\.[a-zA-Z0-9]+)+$/;
 
     const match = file_url.match(regex);

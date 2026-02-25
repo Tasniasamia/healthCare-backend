@@ -44,5 +44,5 @@ export interface IUpdatePatientProfile {
     user:UserProfileInfo,
     patientInfo:PatientProfileInfo,
     patientHealth:PatientHealthDataInfo
-    medicalReport:reportInfo[]
+    medicalReports:reportInfo[]
 }

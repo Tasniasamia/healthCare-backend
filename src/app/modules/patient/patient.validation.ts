@@ -69,5 +69,5 @@ export const updatePatientProfileSchema = z.object({
   user: userProfileSchema,
   patientInfo: patientProfileSchema,
   patientHealth: patientHealthSchema,
-  medicalReport: z.array(reportSchema).optional(),
+  medicalReports: z.array(reportSchema).optional(),
 });

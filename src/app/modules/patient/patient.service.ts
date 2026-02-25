@@ -3,16 +3,14 @@ import type { IUpdatePatientProfile } from "./patient.interface";
 import { prisma } from "../../lib/prisma";
 import { AppError } from "../../errorHelplers/appError";
 import { deleteFileFromCloudinary } from "../../../config/cloude.config";
-import { he } from "zod/locales";
-import { convertDateTime } from "../schedule/schedule.utils";
+import { convertToDateTime } from "./patient.utils";
 
 const updatePatientProfile = async (
   authUser: JwtPayload,
   payload: IUpdatePatientProfile
 ) => {
-  const { user, patientInfo, patientHealth, medicalReport } = payload;
+  const { user, patientInfo, patientHealth, medicalReports } = payload;
   const { patientId, ...healthData } = patientHealth;
-
 
   const isUserExist = await prisma?.user?.findUniqueOrThrow({
     where: { email: authUser?.email, isDeleted: false },
@@ -37,11 +35,13 @@ const updatePatientProfile = async (
         data: { ...patientInfo },
       });
       if (updatePatient) {
-        // if (payload?.patientHealth?.dateOfBirth) {
-        //     healthData.dateOfBirth = convertDateTime(
-        //         typeof healthData.dateOfBirth === "string" ? healthData.dateOfBirth : 'undefined'
-        //     ) as any;
-        // }
+        if (payload?.patientHealth?.dateOfBirth) {
+          healthData.dateOfBirth = convertToDateTime(
+            typeof healthData.dateOfBirth === "string"
+              ? healthData.dateOfBirth
+              : "undefined"
+          ) as any;
+        }
 
         const updatePatientHealth = await tx.patientHealthData.upsert({
           where: { patientId: updatePatient.id },
@@ -54,35 +54,43 @@ const updatePatientProfile = async (
           },
         });
 
-        if (medicalReport && medicalReport?.length > 0) {
-          const reportsToDelete = medicalReport.filter((r) => r?.shouldDelete);
+        if (medicalReports && medicalReports?.length > 0) {
+          const reportsToDelete = medicalReports.filter((r) => r?.shouldDelete);
           for (const report of reportsToDelete) {
             if (report?.reportId) {
               const deletedReport = await tx.medicalReport.delete({
                 where: { id: report.reportId },
               });
               if (deletedReport?.reportLink) {
-                await deleteFileFromCloudinary(deletedReport.reportLink);
+                await deleteFileFromCloudinary(deletedReport?.reportLink);
               }
             }
           }
 
-          const reportsToCreate = medicalReport
+          const reportsToCreate = medicalReports
             .filter((r) => !r?.shouldDelete)
             .map((r) => ({
               reportLink: r?.reportLink as string,
               reportName: r?.reportName as string,
               patientId: updatePatient.id,
             }));
-       
+
           if (reportsToCreate.length) {
             await tx.medicalReport.createMany({
-              data: reportsToCreate 
+              data: reportsToCreate,
             });
           }
         }
-          return { user: updateUser, patient: updatePatient, patientHealth: updatePatientHealth };
-        
+
+        const updatedMedicalReports = await tx.medicalReport.findMany({
+          where: { patientId: updatePatient?.id },
+        });
+        return {
+          user: updateUser,
+          patient: updatePatient,
+          patientHealth: updatePatientHealth,
+          medicalReports: updatedMedicalReports || [],
+        };
       }
     }
   });
