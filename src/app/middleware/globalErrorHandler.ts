@@ -1,11 +1,12 @@
 import type { NextFunction, Request, Response } from "express";
 import status from "http-status";
 import { envVars } from "../../config/env";
-import z from "zod";
+import z, { object } from "zod";
 import type { TErrorSources } from "../interfaces/error.interface";
 import { handleZodError } from "../errorHelplers/handleZodError";
 import { AppError } from "../errorHelplers/appError";
 import { deleteFileFromCloudinary } from "../../config/cloude.config";
+import { deleteUploadedFilesFromGlobalErrorHandler } from "../utils/deleteUploadedFilesFromGlobalErrorHandler";
 
 export const globalErrorHandler = async (
   error: any,
@@ -31,14 +32,53 @@ export const globalErrorHandler = async (
     errorSources = [...simplifiedError.errorSources];
   }
   else if(error instanceof AppError){
-       if(req.file){
-        await deleteFileFromCloudinary(req.file.path)
-    }
+       if(req?.file || req?.files){
+        await deleteUploadedFilesFromGlobalErrorHandler(req)
 
-    if(req.files && Array.isArray(req.files) && req.files.length > 0){
-        const imageUrls = req.files.map((file) => file.path);
-        await Promise.all(imageUrls.map(url => deleteFileFromCloudinary(url))); 
-    }
+       }
+    
+
+    console.log("global error handler",req?.files);
+  //    let filesToDeleteList:string[]=[];
+  //   if(req?.file && req?.file?.path){
+  //     filesToDeleteList?.push(req?.file?.path);
+  //     // await deleteFileFromCloudinary(req.file.path)
+  // }
+  // else if(req?.files && typeof req?.files === "object" && !Array.isArray(req?.files)){
+  //   Object.values(req?.files)?.forEach((files)=>{
+  //     files?.forEach((file)=>{
+  //       if(file?.path){
+  //         filesToDeleteList.push(file?.path);
+
+  //       }
+  //     })
+  //   })
+
+  // }
+  // else if(req.files && Array.isArray(req.files) && req.files.length > 0){
+  //   const imageUrls = req.files.forEach((file) => {
+  //     if(file?.path){
+  //       filesToDeleteList.push(file.path);
+  //     }
+  //   });
+
+  // }
+
+  // if(filesToDeleteList?.length>0){
+  //   await Promise.all((filesToDeleteList)?.map((i)=>deleteFileFromCloudinary(i)))
+  // }
+
+    
+    // if(req.files && Array.isArray(req.files) && req.files.length > 0){
+    //     const imageUrls = req.files.map((file) => file.path);
+    //     await Promise.all(imageUrls.map(url => deleteFileFromCloudinary(url))); 
+    // }
+
+
+
+
+
+
     message = error?.message;
     httpStatusCode = error?.statusCode;
     stack=error?.stack as string

@@ -7,6 +7,7 @@ import status from "http-status";
 import { sendResponse } from "../../shared/sendResponse";
 
 const updatePatientProfile=catchAsyncHandler(async(req:Request,res:Response)=>{
+    throw new AppError(400,"Please do not update patient");
 const user=req?.user as JwtPayload;
 const payload=req?.body;
 // console.log("req?.files",req?.files);

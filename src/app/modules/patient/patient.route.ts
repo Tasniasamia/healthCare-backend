@@ -5,6 +5,7 @@ import { patientController } from "./patient.controller";
 import { validationRequest } from "../../middleware/validationRequest";
 import { updatePatientProfileSchema } from "./patient.validation";
 import { multerUpload } from "../../../config/multer.config";
+import { updateMyPatientProfileMiddleware } from "./patient.middleware";
 
 const router = Router();
 
@@ -15,34 +16,7 @@ router.patch(
     { name: "profilePhoto", maxCount: 1 },
     { name: "medicalReports", maxCount: 5 },
   ]),
-  (req: Request, res: Response, next: NextFunction) => {
-    const payload = JSON.parse(req.body.data); // ✅ parse first
-  
-    const files = req.files as {
-      [fieldName: string]: Express.Multer.File[] | undefined;
-    } | any;
-  
-    if (files?.profilePhoto) {
-      payload.patientInfo.profilePhoto = files.profilePhoto[0].path ;
-    }
-  
-    if (Array.isArray(files?.medicalReports) && files?.medicalReports.length > 0) {
-        console.log("coming here");
-      const newReports = files.medicalReports.map((i:any) => ({
-        reportName:
-          i.originalname || `Medical Report - ${new Date().getTime()}`,
-        reportLink: i.path,
-      }));
-  
-      payload.medicalReports = [
-        ...(payload.medicalReports || []),
-        ...newReports,
-      ];
-    }
-  
-    req.body = payload; // ✅ now it's object
-    next();
-  },
+  updateMyPatientProfileMiddleware,
   validationRequest(updatePatientProfileSchema),
   patientController.updatePatientProfile
 );
