@@ -2,7 +2,7 @@
 import type { Request, Response } from "express";
 import { prisma } from "../../lib/prisma";
 import { envVars } from "../../../config/env";
-import { PaymentStatus } from "../../../generated/prisma/enums";
+import { AppointmentStatus, PaymentStatus } from "../../../generated/prisma/enums";
 import Stripe from "stripe";
 
 // Initialize Stripe
@@ -53,6 +53,7 @@ const handleStripeWebhookEvent = async (req: Request, res: Response) => {
           where: { id: appointmentId },
           data: {
             paymentStatus: session.payment_status === "paid" ? PaymentStatus.PAID : PaymentStatus.UNPAID,
+            status:AppointmentStatus.COMPLETED
           },
         });
 

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Prescription Details</title>
+</head>
+<body style="margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;background-color:#f4f6f9;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="padding:20px 0;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="20" cellspacing="0" style="background:#ffffff;border-radius:8px;">
+          
+          <!-- Header -->
+          <tr>
+            <td align="center" style="background:#0d6efd;color:#ffffff;border-radius:8px 8px 0 0;">
+              <h2 style="margin:0;">HealthCare Center</h2>
+              <p style="margin:5px 0 0;">Your Prescription Details</p>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td>
+
+              <h3>Doctor Information</h3>
+              <p><strong>Name:</strong> <%= appointment.doctor.name %></p>
+              <p><strong>Specialization:</strong> <%= appointment.doctor.specialization || "-" %></p>
+
+              <hr/>
+
+              <h3>Patient Information</h3>
+              <p><strong>Name:</strong> <%= appointment.patient.name %></p>
+              <p><strong>Age:</strong> <%= appointment.patient.age || "-" %></p>
+              <p><strong>Gender:</strong> <%= appointment.patient.gender || "-" %></p>
+
+              <hr/>
+
+              <h3>Appointment Information</h3>
+              <p><strong>Appointment ID:</strong> <%= appointment.id %></p>
+              <p><strong>Date:</strong> <%= appointment.date.toDateString() %></p>
+
+              <hr/>
+
+              <h3>Prescription Instructions</h3>
+              <p style="background:#f8f9fa;padding:10px;border-radius:5px;">
+                <%= prescription.instructions %>
+              </p>
+
+              <% if (prescription.followUpDate) { %>
+                <p>
+                  <strong>Follow-Up Date:</strong>
+                  <%= typeof prescription.followUpDate === "string"
+                        ? prescription.followUpDate
+                        : prescription.followUpDate.toDateString() %>
+                </p>
+              <% } %>
+
+              <% if (pdfUrl) { %>
+                <div style="margin-top:20px;text-align:center;">
+                  <a href="<%= pdfUrl %>" 
+                     style="background:#198754;color:#ffffff;padding:10px 20px;text-decoration:none;border-radius:5px;">
+                     Download Full Prescription (PDF)
+                  </a>
+                </div>
+              <% } %>
+
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td align="center" style="background:#f1f1f1;border-radius:0 0 8px 8px;">
+              <small>
+                This is an automated email from HealthCare Center.<br/>
+                Please do not reply to this email.
+              </small>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

@@ -20,17 +20,26 @@ const bookAppointment = async (
   payload: ICreateBookAppointment
 ) => {
   const patient = await prisma.patient.findUniqueOrThrow({
-    where: { email: user?.email },
+    where: { email: user?.email ,isDeleted:false},
     include:{user:true}
   });
 
   const doctor = await prisma.doctor.findUniqueOrThrow({
-    where: { id: payload?.doctorId },
+    where: { id: payload?.doctorId,isDeleted:false },
   });
 
   const schedule = await prisma.schedule.findFirstOrThrow({
     where: { id: payload?.schduleId },
   });
+
+const isExistAppointment=await prisma.appointment.findFirst({
+  where:{scheduleId:payload?.schduleId,doctorId:payload?.doctorId}
+})
+
+if(isExistAppointment){
+  throw new AppError(status.BAD_REQUEST,'Already booked the Appointment')
+}
+
 
   const videoCallingId = randomUUID();
 

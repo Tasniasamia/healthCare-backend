@@ -6,7 +6,7 @@ model Prescription {
   instructions String   @db.Text
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
-
+  pdfURL       String?
   appointmentId String      @unique
   appointment   Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 

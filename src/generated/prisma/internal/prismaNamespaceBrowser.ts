@@ -192,6 +192,7 @@ export const PatientHealthDataScalarFieldEnum = {
   maritalStatus: 'maritalStatus',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
+  age: 'age',
   patientId: 'patientId'
 } as const
 
@@ -219,6 +220,7 @@ export const PrescriptionScalarFieldEnum = {
   instructions: 'instructions',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
+  pdfURL: 'pdfURL',
   appointmentId: 'appointmentId',
   patientId: 'patientId',
   doctorId: 'doctorId'
