@@ -7,13 +7,7 @@ import {
   PaymentStatus,
 } from "../../../generated/prisma/enums";
 import status from "http-status";
-// export interface ICreateReview {
-//     rating: number;
-//     comment?: string;
-//     appointmentId: string;
 
-//     doctorId: string;
-//   }
 
 const giveReview = async (user: JwtPayload, payload: ICreateReview) => {
   const patient = await prisma.patient.findUniqueOrThrow({

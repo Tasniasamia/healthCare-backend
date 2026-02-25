@@ -14,14 +14,9 @@ export const createReviewSchema = z.object({
   appointmentId: z
     .string("Appointment ID is required")
     .min(1, "Appointment ID cannot be empty"),
-
-  patientId: z
-    .string("Patient ID is required")
-    .min(1, "Patient ID cannot be empty"),
-
   doctorId: z
     .string("Doctor ID is required")
     .min(1, "Doctor ID cannot be empty"),
 });
 
-export const reviewSchema={createReviewSchema}
+export const reviewSchema = { createReviewSchema };
