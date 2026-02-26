@@ -22,3 +22,10 @@ export interface ICreateprescription{
     patientId:string
 
 }
+
+export interface IUpdatePrescription{
+    followUpDate?:string,
+    instructions?:string,
+
+
+}

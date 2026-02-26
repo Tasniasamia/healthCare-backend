@@ -20,7 +20,22 @@ const createPrescription = catchAsyncHandler(async (req: Request, res: Response)
       data: result,
     });
   });
+const updatePrescription = catchAsyncHandler(async (req: Request, res: Response) => {
+    const user = req?.user as JwtPayload;
+    const payload = req?.body;
+    const {id}=req?.params;
+    const result = await prescriptionService.updatePrescription(user,id as string, payload);
+    if (!result) {
+      throw new AppError(status.INTERNAL_SERVER_ERROR, "Failed to update prescription");
+    }
+    return sendResponse(res, {
+      success: true,
+      httpStatusCode: status.OK,
+      message: "You have updated and send prescription successfully",
+      data: result,
+    });
+  });
 
 export const prescriptionController={
-    createPrescription
+    createPrescription,updatePrescription
 }

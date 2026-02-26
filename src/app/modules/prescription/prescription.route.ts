@@ -12,5 +12,6 @@ router?.post(
   validationRequest(prescriptionSchema.createPrescriptionSchema),
   prescriptionController.createPrescription
 );
+router.patch("/:id",checkAuth(Role.DOCTOR),prescriptionController.updatePrescription)
 
 export const prescriptionRoutes=router;

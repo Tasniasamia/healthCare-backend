@@ -86,12 +86,8 @@
 
 //     if (!pdfBuffer) return prescription;
 
-
-
-
-
 //     const pngBuffer = await convertPDFtoPNG(pdfBuffer);
-  
+
 //   // এখন এই pngBuffer upload করো
 //   fileName = `Patient-${findAppointment.patient.name}-${Date.now()}.png`;
 //   uploadPdf = await uploadFileToCloudinary(pngBuffer, fileName);
@@ -101,7 +97,6 @@
 
 //     //  uploadPdf = await uploadFileToCloudinary(pdfBuffer, fileName);
 
-
 // console.log("uploadPdf",uploadPdf)
 //     if (!uploadPdf?.url) throw new Error("Cloudinary upload failed");
 
@@ -110,7 +105,6 @@
 //       where: { id: prescription.id },
 //       data: { pdfURL: uploadPdf.url },
 //     });
-
 
 //     // 9️⃣ Send Email
 //     await sendEmail({
@@ -151,7 +145,7 @@
 //         console.error("Failed to delete uploaded PDF from Cloudinary", cloudErr);
 //       }
 //     }
-  
+
 //     throw new AppError(
 //       status.INTERNAL_SERVER_ERROR,
 //       "Failed to generate prescription"
@@ -161,9 +155,11 @@
 
 // export const prescriptionService = { createPrescription };
 
-
 import type { JwtPayload } from "jsonwebtoken";
-import type { ICreateprescription } from "./prescription.interface";
+import type {
+  ICreateprescription,
+  IUpdatePrescription,
+} from "./prescription.interface";
 import { prisma } from "../../lib/prisma";
 import {
   AppointmentStatus,
@@ -258,12 +254,12 @@ const createPrescription = async (
     fileName = `Patient-${findAppointment.patient.name}-${Date.now()}.png`;
     uploadResult = await uploadFileToCloudinary(imageBuffer, fileName);
 
-    if (!uploadResult?.url) throw new Error("Cloudinary upload failed");
+    if (!uploadResult?.secure_url) throw new Error("Cloudinary upload failed");
 
     // 8️⃣ Update prescription with image URL
     const updatedPrescription = await prisma.prescription.update({
       where: { id: prescription.id },
-      data: { pdfURL: uploadResult.url },
+      data: { pdfURL: uploadResult.secure_url },
     });
 
     // 9️⃣ Send Email
@@ -289,7 +285,7 @@ const createPrescription = async (
           instructions: updatedPrescription.instructions,
           followUpDate: updatedPrescription.followUpDate,
         },
-        pdfUrl: uploadResult.url,
+        pdfUrl: uploadResult.secure_url,
       },
     });
 
@@ -297,11 +293,14 @@ const createPrescription = async (
   } catch (error) {
     await prisma.prescription.delete({ where: { id: prescription.id } });
 
-    if (uploadResult?.url) {
+    if (uploadResult?.secure_url) {
       try {
-        await deleteFileFromCloudinary(uploadResult.url);
+        await deleteFileFromCloudinary(uploadResult.secure_url);
       } catch (cloudErr) {
-        console.error("Failed to delete uploaded file from Cloudinary", cloudErr);
+        console.error(
+          "Failed to delete uploaded file from Cloudinary",
+          cloudErr
+        );
       }
     }
 
@@ -312,4 +311,126 @@ const createPrescription = async (
   }
 };
 
-export const prescriptionService = { createPrescription };
+const updatePrescription = async (
+  user: JwtPayload,
+  id: string,
+  payload: IUpdatePrescription
+) => {
+  // 1️⃣ Doctor check
+  const isDoctorExist = await prisma.doctor.findFirstOrThrow({
+    where: { email: user?.email, isDeleted: false },
+  });
+
+  // 2️⃣ Prescription exist check
+  const existingPrescription = await prisma.prescription.findUnique({
+    where: { id },
+  });
+  if (!existingPrescription) {
+    throw new AppError(status.BAD_REQUEST, "Prescription doesn't Exist");
+  }
+
+  // 3️⃣ Appointment check
+  const findAppointment = await prisma.appointment.findFirstOrThrow({
+    where: {
+      id: existingPrescription.appointmentId,
+      patientId: existingPrescription.patientId,
+      status: AppointmentStatus.COMPLETED,
+      paymentStatus: PaymentStatus.PAID,
+      doctorId: isDoctorExist.id,
+    },
+    include: {
+      patient: { include: { patientHealthData: true } },
+      doctor: { include: { specialities: true } },
+    },
+  });
+
+  // 4️⃣ Build update payload
+  const newPayload: any = {};
+  if (payload?.instructions) newPayload.instructions = payload.instructions;
+  if (payload?.followUpDate) newPayload.followUpDate = new Date(payload.followUpDate);
+
+  // 5️⃣ DB update
+  const updatedPrescription = await prisma.prescription.update({
+    where: { id },
+    data: newPayload,
+  });
+
+  // 6️⃣ Generate new image
+  const imageBuffer = await generatePrescriptionImage({
+    appointment: {
+      id: findAppointment.id,
+      date: new Date(),
+      patient: {
+        name: findAppointment.patient.name,
+        age: findAppointment.patient.patientHealthData?.age,
+        gender: findAppointment.patient.patientHealthData?.gender,
+        email: findAppointment.patient.email,
+      },
+      doctor: {
+        name: findAppointment.doctor.name,
+        specialization: findAppointment.doctor.specialities.join(", "),
+      },
+    },
+    prescription: {
+      instructions: updatedPrescription.instructions,
+      followUpDate: updatedPrescription.followUpDate ?? undefined,
+    },
+  });
+
+  if (!imageBuffer) return updatedPrescription;
+
+  // 7️⃣ Upload new image
+  const fileName = `Patient-${findAppointment.patient.name}-${Date.now()}.png`;
+  const uploadResult = await uploadFileToCloudinary(imageBuffer, fileName);
+
+  if (!uploadResult?.secure_url) {
+    throw new AppError(status.INTERNAL_SERVER_ERROR, "Cloudinary upload failed");
+  }
+
+  // 8️⃣ পুরনো image delete করো — ✅ existingPrescription থেকে নাও
+  if (existingPrescription.pdfURL) {
+    try {
+      await deleteFileFromCloudinary(existingPrescription.pdfURL);
+    } catch (deleteError) {
+      console.error("Failed to delete old image", deleteError);
+      // ❌ throw করো না
+    }
+  }
+
+  // 9️⃣ New URL save করো
+  const finalPrescription = await prisma.prescription.update({
+    where: { id },
+    data: { pdfURL: uploadResult.secure_url },
+  });
+
+  // 🔟 Email পাঠাও
+  await sendEmail({
+    to: findAppointment.patient.email,
+    subject: "Prescription Updated",
+    templateName: "prescriptionEmail",
+    templateData: {
+      appointment: {
+        id: findAppointment.id,
+        date: new Date(),
+        patient: {
+          name: findAppointment.patient.name,
+          age: findAppointment.patient.patientHealthData?.age,
+          gender: findAppointment.patient.patientHealthData?.gender,
+        },
+        doctor: {
+          name: findAppointment.doctor.name,
+          specialization: findAppointment.doctor.specialities.join(", "),
+        },
+      },
+      prescription: {
+        instructions: finalPrescription.instructions,
+        followUpDate: finalPrescription.followUpDate,
+      },
+      pdfUrl: uploadResult.secure_url,
+    },
+  });
+
+  return finalPrescription;
+};
+
+export const prescriptionService = { createPrescription, updatePrescription };
