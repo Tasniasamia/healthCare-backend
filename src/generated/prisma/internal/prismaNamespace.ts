@@ -1913,7 +1913,8 @@ export const PaymentScalarFieldEnum = {
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   stripeEventId: 'stripeEventId',
-  appointmentId: 'appointmentId'
+  appointmentId: 'appointmentId',
+  invoiceUrl: 'invoiceUrl'
 } as const
 
 export type PaymentScalarFieldEnum = (typeof PaymentScalarFieldEnum)[keyof typeof PaymentScalarFieldEnum]

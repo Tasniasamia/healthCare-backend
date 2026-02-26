@@ -43,8 +43,8 @@ if(isExistAppointment){
 
   const videoCallingId = randomUUID();
 
-  const result = await prisma.$transaction(async (tx) => {
-    const createAppointment = await tx.appointment.create({
+  // const result = await prisma.$transaction(async (tx) => {
+    const createAppointment = await prisma.appointment.create({
       data: {
         patientId: patient?.id,
         doctorId: doctor.id,
@@ -53,7 +53,7 @@ if(isExistAppointment){
       },
     });
     if (createAppointment) {
-       await tx.doctorSchedules.update({
+       await prisma.doctorSchedules.update({
         where: {
           doctorId_scheduleId: {
             doctorId: doctor?.id,
@@ -65,7 +65,7 @@ if(isExistAppointment){
 
       const transactionId =  randomUUID();
 
-      const createPayment = await tx.payment.create({
+      const createPayment = await prisma.payment.create({
           data : {
               appointmentId : createAppointment?.id,
               amount : doctor.appointmentFee,
@@ -87,9 +87,10 @@ if(isExistAppointment){
 
      }
     }
-  });
+    return null;
+  // });
 
-  return result;
+  // return result;
 };
 
 const bookAppointmentWithPayLater = async (

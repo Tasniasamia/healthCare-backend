@@ -4,6 +4,10 @@ import { prisma } from "../../lib/prisma";
 import { envVars } from "../../../config/env";
 import { AppointmentStatus, PaymentStatus } from "../../../generated/prisma/enums";
 import Stripe from "stripe";
+import { generatePrescriptionImage } from "../prescription/prescription.utils";
+import { generatePaymentConfirmationImage } from "./payment.utils";
+import { sendEmail } from "../../utils/email";
+import { uploadFileToCloudinary } from "../../../config/cloude.config";
 
 // Initialize Stripe
 const stripe = new Stripe(envVars.STRIPE_SECRET_KEY!, {
@@ -48,8 +52,8 @@ const handleStripeWebhookEvent = async (req: Request, res: Response) => {
       }
 
       // 5️⃣ Update appointment & payment in a transaction
-      await prisma.$transaction(async (tx) => {
-        await tx.appointment.update({
+      // await prisma.$transaction(async (tx) => {
+        await prisma.appointment.update({
           where: { id: appointmentId },
           data: {
             paymentStatus: session.payment_status === "paid" ? PaymentStatus.PAID : PaymentStatus.UNPAID,
@@ -57,15 +61,69 @@ const handleStripeWebhookEvent = async (req: Request, res: Response) => {
           },
         });
 
-        await tx.payment.update({
+      const paymentData=  await prisma.payment.update({
           where: { id: paymentId },
           data: {
             stripeEventId: event.id,
             status: session.payment_status === "paid" ? PaymentStatus.PAID : PaymentStatus.UNPAID,
             paymentGatewayData: session,
           },
+          include:{
+            appointment:{include:{patient:{include:{user:true,patientHealthData:true}},doctor:{include:{specialities:true,}}}}
+          }
         });
-      });
+        const imageBuffer = await generatePaymentConfirmationImage({
+          // Patient
+          patientName: paymentData?.appointment.patient?.user?.name as string,
+          patientEmail: paymentData?.appointment.patient.email,
+          patientAge: paymentData?.appointment.patient.patientHealthData?.age,
+          patientGender: paymentData?.appointment.patient.patientHealthData?.gender as any,
+        
+          // Doctor
+          doctorName: paymentData?.appointment.doctor.name,
+          doctorSpecialization: paymentData?.appointment.doctor.specialities
+            ?.map((s: any) => s.specialty.title) // ← DoctorSpecialty.specialty.title
+            .join(", "),
+          doctorFee: paymentData?.appointment.doctor.appointmentFee,
+        
+          // Payment
+          amount: session.amount_total / 100,
+          appointmentId: appointmentId,
+          paymentId: paymentId,
+          date: new Date().toDateString(),
+        });
+            // 7️⃣ Upload PNG to Cloudinary
+    let fileName = `appointment-${paymentData?.appointment?.patient?.name}-${Date.now()}.png`;
+    let uploadResult = await uploadFileToCloudinary(imageBuffer, fileName);
+
+    if (!uploadResult?.secure_url) throw new Error("Cloudinary upload failed");
+
+    const updatePayment = await prisma.payment.update({
+      where: { id: paymentData?.id },
+      data: { invoiceUrl: uploadResult.secure_url },
+    });
+
+    await sendEmail({
+      to: paymentData?.appointment.patient.email,
+      subject: "Payment Confirmation - HealthCare Center",
+      templateName: "paymentConfirmationEmail", // ← এই নামে file save করো
+      templateData: {
+        patientName: paymentData?.appointment?.patient?.name,
+        patientEmail: paymentData?.appointment?.patient?.email,
+        patientAge: paymentData?.appointment?.patient?.patientHealthData?.age,
+        patientGender: paymentData?.appointment?.patient?.patientHealthData?.gender,
+        doctorName: paymentData?.appointment?.doctor?.name,
+        doctorSpecialization: paymentData?.appointment?.doctor?.specialities
+          ?.map((s: any) => s.specialty.title).join(", "),
+        doctorFee: paymentData?.appointment?.doctor?.appointmentFee,
+        amount: session.amount_total / 100,
+        appointmentId,
+        paymentId,
+        date: new Date().toDateString(),
+        imageUrl: uploadResult.secure_url, // ← cloudinary url
+      },
+    });
+      // });
 
       console.log(`Processed checkout.session.completed for appointment ${appointmentId}`);
       break;
@@ -86,6 +144,8 @@ const handleStripeWebhookEvent = async (req: Request, res: Response) => {
   res.json({ received: true, message: `Webhook event ${event.id} processed` });
 };
 
+
+
 export const paymentService = {
-  handleStripeWebhookEvent,
+  handleStripeWebhookEvent
 };
