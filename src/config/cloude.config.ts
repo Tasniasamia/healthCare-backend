@@ -14,13 +14,14 @@ export const uploadFileToCloudinary = async (
     buffer : Buffer,
     fileName: string,
 ) : Promise<UploadApiResponse> =>{
+    console.log("fileName",fileName);
 
     if(!buffer || !fileName) {
         throw new AppError(status.BAD_REQUEST, "File buffer and file name are required for upload");
     }
 
     const extension = fileName.split(".").pop()?.toLocaleLowerCase();
-
+console.log("extension",extension)
     const fileNameWithoutExtension = fileName
         .split(".")
         .slice(0, -1)
@@ -45,7 +46,7 @@ export const uploadFileToCloudinary = async (
             {
                 resource_type: "auto",
                 public_id: `ph-healthcare/${folder}/${uniqueName}`,
-                folder : `ph-healthcare/${folder}`,
+                // folder : `ph-healthcare/${folder}`,
             },
             (error, result) => {
                 if(error){

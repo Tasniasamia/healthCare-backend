@@ -5,6 +5,7 @@ import { cloudinaryUpload } from "./cloude.config";
 const storage = new CloudinaryStorage({
     cloudinary: cloudinaryUpload,
     params: async (req, file) => {
+        console.log("filename",file.originalname);
       const originalName=file.originalname;
       const extension=originalName.split(".").pop();
       const fileNameWithoutExtension=originalName.split(".").slice(0,-1).join("-").toLowerCase().replace(/[^a-z0-9\-]/g, "");
