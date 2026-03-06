@@ -59,6 +59,7 @@ const loginUser = async (payload: ILoginUserPayload) => {
       password,
     },
   });
+  console.log("login data",data)
 
   const { token, user } = data;
   const tokenPayload = {
@@ -88,6 +89,7 @@ const loginUser = async (payload: ILoginUserPayload) => {
 };
 
 const getProfile = async (user: JwtPayload) => {
+  console.log("user coming here",user);
   const findUser = await prisma.user.findFirst({
     where: { id: user?.id, isDeleted: false },
     include: {
