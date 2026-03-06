@@ -42,7 +42,7 @@ const loginUser = catchAsyncHandler(async (req: Request, res: Response) => {
     httpStatusCode: status.OK,
     success: true,
     message: "User logged in successfully",
-    data: data,
+    data: {accessToken,refreshToken,token,user:data?.user},
   });
 });
 
