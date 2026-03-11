@@ -104,7 +104,7 @@ const updateAdmin=async(id:string,payload:TUpdateAdminPayload)=>{
     try{
      if(updateAdmin?.id){
         const result=await prisma.$transaction(async(tx)=>{
-            const userUpdateData: any = {};
+            const userUpdateData: { name?: string; email?: string } = {};
 
             if (payload.name) userUpdateData.name = payload.name;
             if (payload.email) userUpdateData.email = payload.email;
@@ -119,8 +119,11 @@ const updateAdmin=async(id:string,payload:TUpdateAdminPayload)=>{
     }
 
 }
-    catch(error:any){
-        throw new Error(error?.message)
+    catch(error){
+        if (error instanceof Error) {
+          throw error;
+        }
+        throw new Error("Failed to update admin");
     }
 }
 
@@ -153,7 +156,7 @@ const deleteAdmin = async (id: string) => {
         });
         return { ...result, user: { ...softDeleteAdmin } };
       }
-    } catch (error: any) {
+    } catch {
       await prisma.admin.update({
         where: { id: id },
         data: { isDeleted: true,deletedAt:new Date() },

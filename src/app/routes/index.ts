@@ -11,6 +11,7 @@ import { appointmentRoutes } from "../modules/appointment/appointment.route";
 import { patientRoutes } from "../modules/patient/patient.route";
 import { reviewRoutes } from "../modules/review/review.route";
 import { prescriptionRoutes } from "../modules/prescription/prescription.route";
+import { StatsRoutes } from "../modules/stats/stats.route";
 
 
 
@@ -64,6 +65,10 @@ const allRoutes=[
     {
         path:'/prescription',
         handler:prescriptionRoutes
+    },
+    {
+        path:'/stats',
+        handler:StatsRoutes
     }
 
 ]

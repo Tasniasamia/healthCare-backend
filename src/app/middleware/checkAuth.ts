@@ -23,13 +23,13 @@ export const checkAuth=(...AuthRole:Role[])=>{
         })
         if(sessionExistUser && sessionExistUser?.user){
 
-            let expireTime=new Date(sessionExistUser?.expiresAt).getTime();
-            let createTime=new Date(sessionExistUser?.createdAt).getTime();
-            let now=new Date().getTime();
+            const expireTime=new Date(sessionExistUser?.expiresAt).getTime();
+            const createTime=new Date(sessionExistUser?.createdAt).getTime();
+            const now=new Date().getTime();
 
-            let sessionLifeTime=(expireTime-createTime);
-            let sessionRemainTime=(expireTime-now);
-            let percentageTime=(sessionRemainTime/sessionLifeTime)*100;
+            const sessionLifeTime=(expireTime-createTime);
+            const sessionRemainTime=(expireTime-now);
+            const percentageTime=(sessionRemainTime/sessionLifeTime)*100;
 
             if(percentageTime<20){
                 res.setHeader('X-Session-Refresh','true');
@@ -66,7 +66,7 @@ export const checkAuth=(...AuthRole:Role[])=>{
 
         next();
     }
-    catch(error:any){
+    catch(error){
         next(error);
     }
     }
