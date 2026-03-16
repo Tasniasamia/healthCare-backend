@@ -46,7 +46,7 @@ const createDoctor = async (payload: TCreateDoctorPayload) => {
         data: { ...payload?.doctor, userId: createUser?.user?.id },
       });
     });
-
+console.log("createDoctor", createDoctor);
     if (createDoctor?.id) {
       const createDoctorSpecialityPayload = specialities.map((speciality) => {
         return {
@@ -54,32 +54,21 @@ const createDoctor = async (payload: TCreateDoctorPayload) => {
           specialtyId: speciality?.id,
         };
       });
+      console.log("createDoctorSpecialityPayload", createDoctorSpecialityPayload);
+
       const createDoctorSpeciality = await prisma.doctorSpecialty.createMany({
         data: createDoctorSpecialityPayload,
       });
-      const findDoctorData = await prisma.doctor.findUnique({
-        where: { id: createDoctor?.id },
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          address: true,
-          appointmentFee: true,
-          registrationNumber: true,
-          avaerageRating: true,
-          contactNumber: true,
-          currentWorkingPlace: true,
-          designation: true,
-          specialities: true,
-          user: true,
-          profilePhoto: true,
-          qualification: true,
-          createAt: true,
-          gender: true,
-          experience: true,
-        },
+
+      console.log("createDoctorSpeciality", createDoctorSpeciality);
+      const findDoctorData = await prisma.doctor.findUniqueOrThrow({
+        where: { id: createDoctor?.id }
       });
+
+       console.log("findDoctorData", findDoctorData);
+      console.log("createDoctorSpeciality", createDoctorSpeciality);
       return findDoctorData;
+     
     }
   } catch (error) {
     await prisma.user.delete({ where: { id: createUser?.user?.id as string } });

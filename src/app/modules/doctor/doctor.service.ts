@@ -2,11 +2,11 @@ import status from "http-status";
 import { AppError } from "../../errorHelplers/appError";
 import { prisma } from "../../lib/prisma";
 import type { TUpdateDoctorPayload } from "./doctor.interface";
-import { Role, UserStatus } from "../../../generated/prisma/enums";
+import { UserStatus } from "../../../generated/prisma/enums";
 import { QueryBuilder } from "../../utils/queryBuilder";
-import type { doctor, Prisma } from "../../../generated/prisma/client";
+import type { doctor} from "../../../generated/prisma/client";
 import type { doctorInclude, doctorWhereInput } from "../../../generated/prisma/models";
-import { DoctorScalarFieldEnum } from "../../../generated/prisma/internal/prismaNamespace";
+// import { DoctorScalarFieldEnum } from "../../../generated/prisma/internal/prismaNamespace";
 import { doctorFilterableFields, doctorSearchableFields } from "./doctor.constant";
 import type { IQueryParams } from "../../interfaces/query.interface";
 
@@ -28,6 +28,11 @@ const result = await queryBuilder
     })
     .include({
         user: true,
+        specialities: {
+          include: {
+            specialty: true,
+          },
+        },
       
     })
     .paginate()
