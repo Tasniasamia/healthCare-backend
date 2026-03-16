@@ -12,7 +12,7 @@ const getAllDoctor=catchAsyncHandler(async(req:Request,res:Response)=>{
 //    const result=await doctorService.getAllDoctor(req?.query as IQueryParams) ;
 // const result = await getAllDoctorV1(req?.query as IQueryParams);
 const result=await getAllDoctorV2(req?.query as IQueryParams) ;
-console.log("result",result);
+// console.log("result",result);
    sendResponse(res, {
     httpStatusCode: status.OK,
     success: true,
