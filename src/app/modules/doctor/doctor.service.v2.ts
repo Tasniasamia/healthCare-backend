@@ -16,15 +16,6 @@ export const getAllDoctorV2 = async (query: IQueryParams) => {
     const take = Number(query?.limit) || 10;
 
     //rule-2 sorting  (only two layer working here like (user.name)
-    // const searchFields = [
-    //   "name",
-    //   "email",
-    //   "address",
-    //   "gender",
-    //   "appointmentFee",
-    //   "user.status",
-    //   "doctorSchedules.isBooked"
-    // ]
 
     const sortOrder = query.sortOrder ?? "desc";
     const sortBy = query.sortBy || "createdAt";
@@ -131,7 +122,7 @@ export const getAllDoctorV2 = async (query: IQueryParams) => {
       }
     }
 
-    // // Rule-4: Dynamic Filter
+    // Rule-4: Dynamic Filter
     const excludedField = [
       "searchTerm",
       "page",
@@ -268,6 +259,31 @@ export const getAllDoctorV2 = async (query: IQueryParams) => {
       }
     });
 
+    //Rule-5 include
+    let include: Prisma.doctorInclude = {};
+    if (query?.include) {
+      const includeAllFields = query.include
+        .split(",")
+        .map((item: string) => item.trim());
+      includeAllFields.forEach((item: string) => {
+        const includeSubFields = item.split(".");
+        if (includeSubFields.length === 2) {
+          const [firstField, secondField] = includeSubFields;
+          include = {
+            ...include,
+            [firstField as string]: {
+              include: { [secondField as string]: true },
+            },
+          };
+        } else {
+          include = { ...include, [item as string]: true };
+        }
+      });
+    }
+
+
+
+
     const data = await prisma.doctor.findMany({
       where: {
         ...(searchCondition.length > 0 && { OR: searchCondition }),
@@ -276,11 +292,12 @@ export const getAllDoctorV2 = async (query: IQueryParams) => {
       orderBy,
       skip,
       take,
-      include: {
-        user: true,
-        specialities: { include: { specialty: true } },
-        doctorSchedules: true,
-      },
+      include,
+      // include: {
+      //   user: true,
+      //   specialities: { include: { specialty: true } },
+      //   doctorSchedules: true,
+      // },
     });
     const totalAmountOfData = await prisma.doctor.count({
       where: {
