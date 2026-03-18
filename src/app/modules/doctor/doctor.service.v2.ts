@@ -9,7 +9,7 @@ import type {
 import type { Prisma } from "../../../generated/prisma/client";
 
 export const getAllDoctorV2 = async (query: IQueryParams) => {
-  try {
+  // try {
     //rule-1 pagination
     const page = Number(query?.page) || 1;
     const skip = (page - 1) * Number(query?.limit) || 0;
@@ -23,6 +23,14 @@ export const getAllDoctorV2 = async (query: IQueryParams) => {
     let orderBy: doctorOrderByWithRelationInput = {};
 
     const parts = sortBy.split(".");
+    if (parts.length > 2) {
+      console.log("coming here to check the sorting with more than two level of nesting");
+      throw new AppError(
+        status.BAD_REQUEST,
+        "Sorting only works with two levels of nesting",
+      );
+      return;
+    }
     if (parts.length === 2) {
       const [relation, field] = parts;
       orderBy = { [relation as string]: { [field as string]: sortOrder } };
@@ -313,11 +321,11 @@ export const getAllDoctorV2 = async (query: IQueryParams) => {
       totalPages: Math.ceil(totalAmountOfData / take), // ✅ এখন সঠিক কাজ করবে
     };
     return { data, meta };
-  } catch (error) {
-    throw new AppError(
-      status.INTERNAL_SERVER_ERROR,
-      "Failed to retrieve doctors",
-      error instanceof Error ? error.stack : undefined,
-    );
-  }
+  // } catch (error) {
+    // throw new AppError(
+    //   status.INTERNAL_SERVER_ERROR,
+    //   "Failed to retrieve doctors",
+    //   error instanceof Error ? error.stack : undefined,
+    // );
+  // }
 };

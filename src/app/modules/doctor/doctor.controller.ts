@@ -12,13 +12,20 @@ const getAllDoctor=catchAsyncHandler(async(req:Request,res:Response)=>{
 //    const result=await doctorService.getAllDoctor(req?.query as IQueryParams) ;
 const result=await getAllDoctorV2(req?.query as IQueryParams) ;
 // console.log("result",result);
-   sendResponse(res, {
+if(result){
+    sendResponse(res, {
     httpStatusCode: status.OK,
     success: true,
     message: "Doctors retrieved successfully",
     data: result?.data || [],
     meta:result?.meta
-  });});
+  });
+}
+     throw new AppError(
+      status.INTERNAL_SERVER_ERROR,
+      "Failed to retrieve doctors"
+    );
+});
 
   const getDoctorById=catchAsyncHandler(async(req:Request,res:Response)=>{
     const {id}=await req?.params;
@@ -46,6 +53,7 @@ const updateDoctor=catchAsyncHandler(async(req:Request,res:Response)=>{
         data:result
         
     })
+    
 })
 const deleteDoctor=catchAsyncHandler(async(req:Request,res:Response)=>{
     const payload=await req?.body;
