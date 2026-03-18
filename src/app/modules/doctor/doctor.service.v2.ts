@@ -320,6 +320,7 @@ export const getAllDoctorV2 = async (query: IQueryParams) => {
     "doctor",
     numberSearchFields,
     stringSearchFields,
+    ['user',"specialty"] // ✅ one-to-one গুলো দাও, appointments নেই তাই some পাবে
   );
 
   builder.callAll();

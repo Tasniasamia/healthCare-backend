@@ -5,7 +5,7 @@ import { prisma } from "../../lib/prisma";
 
 export class QueryBuilder {
   query: IQueryParams;
-  model: keyof typeof prisma; // ✅ prisma-র valid model name হবে
+  model: keyof typeof prisma;
 
   page: number;
   skip: number;
@@ -17,64 +17,80 @@ export class QueryBuilder {
     | Record<string, "asc" | "desc">
     | Record<string, Record<string, "asc" | "desc">> = {};
 
-
   searchCondition: Record<string, unknown>[] = [];
   numberSearchFields: string[] = [];
   stringSearchFields: string[] = [];
   searchItem?: string | undefined;
 
-
- filterCondition: Record<string, unknown>[] = [];
-       include: Record<string, unknown>={}
-
+  filterCondition: Record<string, unknown>[] = [];
+  include: Record<string, unknown> = {};
+  singleRelations: string[] = [];
 
   constructor(
     query: IQueryParams,
     model: keyof typeof prisma,
-    numberSearchFields: string[],
-    stringSearchFields: string[],
+    numberSearchFields?: string[],
+    stringSearchFields?: string[],
+    singleRelations?: string[],
   ) {
     this.query = query;
     this.model = model;
-    //rule-1 pagination
     this.page = Number(this.query?.page) || 1;
     this.take = Number(this.query?.limit) || 10;
     this.skip = (this.page - 1) * this.take;
-    //rule-2 sorting
     this.sortOrder = this.query?.sortOrder ?? "desc";
     this.sortBy = this.query.sortBy || "createdAt";
-    //rule-3 search
-    this.numberSearchFields = numberSearchFields;
-    this.stringSearchFields = stringSearchFields;
+    this.numberSearchFields = numberSearchFields || [];
+    this.stringSearchFields = stringSearchFields || [];
     this.searchItem = this.query?.searchTerm || undefined;
-
+    this.singleRelations = singleRelations || [];
   }
 
-  //rule-2 sorting function
+  private parseValue(value: unknown): unknown {
+    if (value === "true") return true;
+    if (value === "false") return false;
+    const numericValue = Number(value);
+    if (!isNaN(numericValue) && value !== "") return numericValue;
+    return value;
+  }
+
+  // innermost field value বানায় — bracketMatch, array, normal সব handle করে
+  private buildFieldValue(
+    actualField: string,
+    value: unknown,
+    bracketMatch: RegExpMatchArray | null,
+  ): Record<string, unknown> {
+    if (bracketMatch) {
+      const [, fieldName, operator] = bracketMatch;
+      return {
+        [fieldName as string]: {
+          [operator as string]: this.parseValue(value),
+        },
+      };
+    }
+    if (Array.isArray(value)) {
+      return {
+        [actualField]: { in: value.map((v) => this.parseValue(v)) },
+      };
+    }
+    return {
+      [actualField]: this.parseValue(value),
+    };
+  }
 
   sort() {
     const parts = this.sortBy.split(".");
     if (parts.length > 2) {
-      console.log(
-        "coming here to check the sorting with more than two level of nesting",
-      );
-      throw new AppError(
-        status.BAD_REQUEST,
-        "Sorting only works with two levels of nesting",
-      );
-      return;
+      throw new AppError(status.BAD_REQUEST, "Sorting only works with two levels of nesting");
     }
     if (parts.length === 2) {
       const [relation, field] = parts;
-      this.orderBy = {
-        [relation as string]: { [field as string]: this.sortOrder },
-      };
+      this.orderBy = { [relation as string]: { [field as string]: this.sortOrder } };
     } else {
       this.orderBy = { [this.sortBy]: this.sortOrder };
     }
   }
 
-  //rule-3 search function
   search() {
     if (this.searchItem) {
       const numericValue = Number(this.searchItem);
@@ -83,7 +99,6 @@ export class QueryBuilder {
           if (item.includes(".")) {
             const exactFieldofSearch = item.split(".");
             if (exactFieldofSearch.length === 3) {
-              console.log("searching in relation with two level of nesting");
               const [relation, subRelation, field] = exactFieldofSearch;
               this.searchCondition.push({
                 [relation as string]: {
@@ -97,24 +112,17 @@ export class QueryBuilder {
             } else if (exactFieldofSearch.length === 2) {
               const [relation, field] = exactFieldofSearch;
               this.searchCondition.push({
-                [relation as string]: {
-                  [field as string]: Number(this.searchItem),
-                },
+                [relation as string]: { [field as string]: Number(this.searchItem) },
               });
             }
           }
-
-          this.searchCondition.push({
-            [item as string]: Number(this.searchItem),
-          });
+          this.searchCondition.push({ [item as string]: Number(this.searchItem) });
         });
       } else {
-        console.log("coming here to string search");
         this.stringSearchFields?.forEach((item: string) => {
           if (item.includes(".")) {
             const exactFieldofSearch = item.split(".");
             if (exactFieldofSearch.length === 3) {
-              console.log("searching in relation with two level of nesting");
               const [relation, subRelation, field] = exactFieldofSearch;
               this.searchCondition.push({
                 [relation as string]: {
@@ -152,168 +160,96 @@ export class QueryBuilder {
     }
   }
 
-  //rule-4 filter function
-  filter(){
-     const excludedField = [
-          "searchTerm",
-          "page",
-          "limit",
-          "sortBy",
-          "sortOrder",
-          "fields",
-          "include",
-        ];
-    
-       
-        Object.keys(this.query).forEach((field) => {
-          if (excludedField.includes(field)) return;
-          const value =this. query[field];
-          const parts = field.split(".");
-          if (parts.length === 3) {
-            const [relation, subRelation, actualField] = parts;
-            const bracketMatch = actualField?.match(
-              /^(.+)\[(gt|lt|gte|lte|equals)\]$/,
-            );
-            if (bracketMatch) {
-              const [, actualField2, operator] = bracketMatch;
-              const numericValue = Number(value);
-              this.filterCondition.push({
-                [relation as string]: {
-                  some: {
-                    [subRelation as string]: {
-                      [actualField2 as string]: {
-                        [operator as string]: isNaN(numericValue)
-                          ? value
-                          : numericValue,
-                      },
-                    },
-                  },
-                },
-              });
-            } else if (Array.isArray(value)) {
-              const allNumeric = value.every((v) => !isNaN(Number(v)));
-    
-              this.filterCondition.push({
-                [relation as string]: {
-                  some: {
-                    [subRelation as string]: {
-                      [actualField as string]: {
-                        in: allNumeric ? value.map(Number) : value, // number[] বা string[]
-                      },
-                    },
-                  },
-                },
-              });
-            } else {
-              const numericValue = Number(value);
-              this.filterCondition.push({
-                [relation as string]: {
-                  some: {
-                    [subRelation as string]: {
-                      [actualField as string]: isNaN(numericValue)
-                        ? value
-                        : numericValue,
-                    },
-                  },
-                },
-              });
-            }
-          } else if (parts.length === 2) {
-            const [relation, actualField2] = parts;
-            const bracketMatch = actualField2?.match(
-              /^(.+)\[(gt|lt|gte|lte|equals)\]$/,
-            );
-    
-            if (bracketMatch) {
-              const [, actualField3, operator] = bracketMatch;
-              const numericValue = Number(value);
-    
-              this.filterCondition.push({
-                [relation as string]: {
-                  [actualField3 as string]: {
-                    [operator as string]: isNaN(numericValue)
-                      ? value
-                      : numericValue,
-                  },
-                },
-              });
-            } else if (Array.isArray(value)) {
-              const allNumeric = value.every((v) => !isNaN(Number(v)));
-    
-              this.filterCondition.push({
-                [relation as string]: {
-                  [actualField2 as string]: {
-                    in: allNumeric ? value.map(Number) : value,
-                  },
-                },
-              });
-            } else {
-              const numericValue = Number(value);
-    
-              this.filterCondition.push({
-                [relation as string]: {
-                  [actualField2 as string]: isNaN(numericValue)
-                    ? value
-                    : numericValue,
-                },
-              });
-            }
-          } else if (!field.includes(".")) {
-            //bracket match
-            const bracketMatch = field.match(/^(.+)\[(gt|lt|gte|lte|equals)\]$/);
-            if (bracketMatch) {
-              const [, actualField, operator] = bracketMatch;
-              const numericValue = Number(value);
-    
-              this.filterCondition.push({
-                [actualField as string]: {
-                  [operator as string]: isNaN(numericValue) ? value : numericValue,
-                },
-              });
-            }
-            //array value handle
-            else if (Array.isArray(value)) {
-              const allNumeric = value.every((v) => !isNaN(Number(v)));
-    
-              this.filterCondition.push({
-                [field]: {
-                  in: allNumeric ? value.map(Number) : value, // number[] বা string[]
-                },
-              });
-            } else {
-              const numericValue = Number(value);
-              this.filterCondition.push({
-                [field]: isNaN(numericValue) ? value : numericValue,
-              });
-            }
-          }
-        });
-  }
+  filter() {
+    const excludedField = [
+      "searchTerm", "page", "limit", "sortBy", "sortOrder", "fields", "include",
+    ];
 
-//rule-5 include function
-dynamicInclude(){
-        if (this.query?.include) {
-          const includeAllFields = this.query.include
-            .split(",")
-            .map((item: string) => item.trim());
-          includeAllFields.forEach((item: string) => {
-            const includeSubFields = item.split(".");
-            if (includeSubFields.length === 2) {
-              const [firstField, secondField] = includeSubFields;
-              this.include = {
-                ...this.include,
-                [firstField as string]: {
-                  include: { [secondField as string]: true },
-                },
-              };
-            } else {
-              this.include = { ...this.include, [item as string]: true };
-            }
+    Object.keys(this.query).forEach((field) => {
+      if (excludedField.includes(field)) return;
+      const value = this.query[field];
+      const parts = field.split(".");
+
+      // ─── e.g. specialities.specialty.title ──────────────────────
+      if (parts.length === 3) {
+        const [relation, subRelation, actualField] = parts;
+        const bracketMatch = actualField?.match(/^(.+)\[(gt|lt|gte|lte|equals)\]$/) ?? null;
+
+        // innermost field value
+        const fieldValue = this.buildFieldValue(actualField as string, value, bracketMatch);
+
+        // subRelation: single নাকি array?
+        const subUsesSome = !this.singleRelations.includes(subRelation as string);
+        const subLevel = subUsesSome
+          ? { some: fieldValue }          // appointments: { some: { status: "..." } }
+          : fieldValue;                   // specialty: { title: "..." }
+
+        // relation: single নাকি array?
+        const relUsesSome = !this.singleRelations.includes(relation as string);
+        this.filterCondition.push({
+          [relation as string]: relUsesSome
+            ? { some: { [subRelation as string]: subLevel } }   // specialities: { some: { specialty: {...} } }
+            : { [subRelation as string]: subLevel },            // schedule: { appointments: {...} }
+        });
+
+      // ─── e.g. schedule.startDateTime ────────────────────────────
+      } else if (parts.length === 2) {
+        const [relation, actualField2] = parts;
+        const bracketMatch = actualField2?.match(/^(.+)\[(gt|lt|gte|lte|equals)\]$/) ?? null;
+
+        const fieldValue = this.buildFieldValue(actualField2 as string, value, bracketMatch);
+
+        const relUsesSome = !this.singleRelations.includes(relation as string);
+        this.filterCondition.push({
+          [relation as string]: relUsesSome
+            ? { some: fieldValue }   // appointments: { some: { status: "..." } }
+            : fieldValue,            // schedule: { startDateTime: "..." }
+        });
+
+      // ─── e.g. isBooked, status ──────────────────────────────────
+      } else if (!field.includes(".")) {
+        const bracketMatch = field.match(/^(.+)\[(gt|lt|gte|lte|equals)\]$/) ?? null;
+
+        if (bracketMatch) {
+          const [, actualField, operator] = bracketMatch;
+          this.filterCondition.push({
+            [actualField as string]: {
+              [operator as string]: this.parseValue(value),
+            },
+          });
+        } else if (Array.isArray(value)) {
+          this.filterCondition.push({
+            [field]: { in: value.map((v) => this.parseValue(v)) },
+          });
+        } else {
+          this.filterCondition.push({
+            [field]: this.parseValue(value),
           });
         }
-    
-}
-//call all functions in execute function and return the result
+      }
+    });
+  }
+
+  dynamicInclude() {
+    if (this.query?.include) {
+      const includeAllFields = this.query.include
+        .split(",")
+        .map((item: string) => item.trim());
+      includeAllFields.forEach((item: string) => {
+        const includeSubFields = item.split(".");
+        if (includeSubFields.length === 2) {
+          const [firstField, secondField] = includeSubFields;
+          this.include = {
+            ...this.include,
+            [firstField as string]: { include: { [secondField as string]: true } },
+          };
+        } else {
+          this.include = { ...this.include, [item as string]: true };
+        }
+      });
+    }
+  }
+
   callAll() {
     this.sort();
     if (this.searchItem) {
@@ -323,21 +259,30 @@ dynamicInclude(){
     this.dynamicInclude();
   }
 
-  // fetch data from database
   fetch = async () => {
-    const delegate = prisma[this.model] as any;
+    const delegate = (prisma as any)[this.model];
+
+    if (!delegate || typeof delegate.findMany !== "function") {
+      throw new AppError(
+        status.BAD_REQUEST,
+        `"${this.model as any}" নামে কোনো prisma model পাওয়া যায়নি`,
+      );
+    }
+
+    const whereCondition = {
+      ...(this.searchCondition.length > 0 && { OR: this.searchCondition }),
+      ...(this.filterCondition.length > 0 && { AND: this.filterCondition }),
+    };
+
     const data = await delegate.findMany({
-           where: {
-        ...(this.searchCondition.length > 0 && { OR: this.searchCondition }),
-        ...(this.filterCondition.length > 0 && { AND: this.filterCondition }),
-      },
-      include:this.include,
+      where: whereCondition,
+      include: this.include,
       orderBy: this.orderBy,
       skip: this.skip,
       take: this.take,
     });
 
-    const totalAmountOfData = await delegate.count();
+    const totalAmountOfData = await delegate.count({ where: whereCondition });
 
     const meta = {
       page: this.page,
