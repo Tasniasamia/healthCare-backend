@@ -10,16 +10,14 @@ import { getAllDoctorV2 } from "./doctor.service.v2";
 
 const getAllDoctor=catchAsyncHandler(async(req:Request,res:Response)=>{
 //    const result=await doctorService.getAllDoctor(req?.query as IQueryParams) ;
-// const result = await getAllDoctorV1(req?.query as IQueryParams);
 const result=await getAllDoctorV2(req?.query as IQueryParams) ;
 // console.log("result",result);
    sendResponse(res, {
     httpStatusCode: status.OK,
     success: true,
     message: "Doctors retrieved successfully",
-    data:result
-    // data: result?.data || [],
-    // meta:result?.meta
+    data: result?.data || [],
+    meta:result?.meta
   });});
 
   const getDoctorById=catchAsyncHandler(async(req:Request,res:Response)=>{

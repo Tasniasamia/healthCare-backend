@@ -26,15 +26,13 @@ export const auth = betterAuth({
 
     // },
   },
-  session: {
-    expiresIn: 60 * 60 * 60 * 24,
-    updateAge: 60 * 60 * 60 * 24,
-    cookieCache: {
-      enabled: true,
-      maxAge: 60 * 60 * 60 * 24,
-    },
-  },
-
+ session: {
+  expiresIn: 60 * 60 * 24,   // = 86400 seconds
+  updateAge: 60 * 60 * 24,
+  cookieCache: {
+    maxAge: 60 * 60 * 24,
+  }
+},
   socialProviders: {
       google: { 
           clientId: envVars.CLIENT_ID as string, 

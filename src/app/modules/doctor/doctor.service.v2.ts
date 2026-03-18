@@ -15,7 +15,7 @@ export const getAllDoctorV2 = async (query: IQueryParams) => {
     const skip = (page - 1) * Number(query?.limit) || 0;
     const take = Number(query?.limit) || 10;
 
-    //rule-2 sorting
+    //rule-2 sorting  (only two layer working here like (user.name)
     // const searchFields = [
     //   "name",
     //   "email",
@@ -132,7 +132,7 @@ export const getAllDoctorV2 = async (query: IQueryParams) => {
       }
     }
 
-// Rule-4: Dynamic Filter
+// // Rule-4: Dynamic Filter
 const excludedField = [
   "searchTerm", "page", "limit", "sortBy", "sortOrder", "fields", "include",
 ];
@@ -143,9 +143,8 @@ Object.keys(query).forEach((field) => {
   if (excludedField.includes(field)) return;
 
   const value = query[field];
-
+//bracket match
   const bracketMatch = field.match(/^(.+)\[(gt|lt|gte|lte|equals)\]$/);
-
   if (bracketMatch) {
     const [, actualField, operator] = bracketMatch;
     const numericValue = Number(value);
@@ -155,17 +154,29 @@ Object.keys(query).forEach((field) => {
         [operator as string]: isNaN(numericValue) ? value : numericValue,
       },
     });
-  } else {
-    console.log("not bracket match", field, value);
+
+  } 
+  //array value handle
+  else if (Array.isArray(value)) {
+    const allNumeric = value.every((v) => !isNaN(Number(v)));
+
+    filterCondition.push({
+      [field]: {
+        in: allNumeric ? value.map(Number) : value, // number[] বা string[]
+      },
+    });
+
+  } 
+  else {
+  
     const numericValue = Number(value);
     filterCondition.push({
       [field]: isNaN(numericValue) ? value : numericValue,
     });
   }
-
-
-
 });
+
+ 
 
 
 
@@ -184,7 +195,21 @@ Object.keys(query).forEach((field) => {
         doctorSchedules: true,
       },
     });
-    return data;
+ const totalAmountOfData = await prisma.doctor.count({
+  where: {
+    ...(searchCondition.length > 0 && { OR: searchCondition }),
+    ...(filterCondition.length > 0 && { AND: filterCondition }),
+  },
+});
+
+const meta = {
+  page: page,
+  limit: take,
+  total: totalAmountOfData,
+  totalPages: Math.ceil(totalAmountOfData / take), // ✅ এখন সঠিক কাজ করবে
+};
+return { data, meta };
+    
   } catch (error) {
     throw new AppError(
       status.INTERNAL_SERVER_ERROR,
