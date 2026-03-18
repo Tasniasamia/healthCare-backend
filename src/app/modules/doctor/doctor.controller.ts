@@ -9,7 +9,20 @@ import { getAllDoctorV1 } from "./doctor.service.v1";
 import { getAllDoctorV2 } from "./doctor.service.v2";
 
 const getAllDoctor=catchAsyncHandler(async(req:Request,res:Response)=>{
-const result=await getAllDoctorV2(req?.query as IQueryParams) ;
+  const stringSearchFields = [
+      "user.name",
+      "specialities.specialty.title",
+      "email",
+      "id",
+      "name",
+    ];
+    const numberSearchFields = [
+      "appointmentFee",
+      "avaerageRating",
+      "experience",
+    ];
+
+const result=await getAllDoctorV2(req?.query as IQueryParams,stringSearchFields,numberSearchFields) ;
 if(result){
     sendResponse(res, {
     httpStatusCode: status.OK,

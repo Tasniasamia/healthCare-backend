@@ -8,8 +8,8 @@ import type {
 } from "../../../generated/prisma/models";
 import type { Prisma } from "../../../generated/prisma/client";
 
-export const getAllDoctorV2 = async (query: IQueryParams) => {
-  
+export const getAllDoctorV2 = async (query: IQueryParams,stringSearchFields:string[],numberSearchFields:string[]) => {
+
     //rule-1 pagination
     const page = Number(query?.page) || 1;
     const skip = (page - 1) * Number(query?.limit) || 0;
@@ -40,21 +40,8 @@ export const getAllDoctorV2 = async (query: IQueryParams) => {
 
     //Rule-3 searcing data
     let searchCondition: doctorWhereInput[] = [];
-
-    const stringSearchFields = [
-      "user.name",
-      "specialities.specialty.title",
-      "email",
-      "id",
-      "name",
-    ];
-    const numberSearchFields = [
-      "appointmentFee",
-      "avaerageRating",
-      "experience",
-    ];
     const searchItem = query?.searchTerm || undefined;
-
+    
     if (searchItem) {
       const numericValue = Number(searchItem);
       if (!isNaN(numericValue)) {
