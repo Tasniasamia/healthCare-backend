@@ -22,7 +22,7 @@ const getAllDoctor=catchAsyncHandler(async(req:Request,res:Response)=>{
       "experience",
     ];
 
-const result=await getAllDoctorV2(req?.query as IQueryParams,stringSearchFields,numberSearchFields) ;
+const result=await getAllDoctorV2(req?.query as IQueryParams) ;
 if(result){
     sendResponse(res, {
     httpStatusCode: status.OK,
