@@ -9,7 +9,7 @@ import type {
 import type { Prisma } from "../../../generated/prisma/client";
 
 export const getAllDoctorV2 = async (query: IQueryParams) => {
-  // try {
+  
     //rule-1 pagination
     const page = Number(query?.page) || 1;
     const skip = (page - 1) * Number(query?.limit) || 0;
@@ -142,7 +142,6 @@ export const getAllDoctorV2 = async (query: IQueryParams) => {
     ];
 
     const filterCondition: doctorWhereInput[] = [];
-
     Object.keys(query).forEach((field) => {
       if (excludedField.includes(field)) return;
       const value = query[field];
@@ -288,10 +287,6 @@ export const getAllDoctorV2 = async (query: IQueryParams) => {
         }
       });
     }
-
-
-
-
     const data = await prisma.doctor.findMany({
       where: {
         ...(searchCondition.length > 0 && { OR: searchCondition }),
@@ -300,12 +295,8 @@ export const getAllDoctorV2 = async (query: IQueryParams) => {
       orderBy,
       skip,
       take,
-      include,
-      // include: {
-      //   user: true,
-      //   specialities: { include: { specialty: true } },
-      //   doctorSchedules: true,
-      // },
+      include
+   
     });
     const totalAmountOfData = await prisma.doctor.count({
       where: {
@@ -321,11 +312,5 @@ export const getAllDoctorV2 = async (query: IQueryParams) => {
       totalPages: Math.ceil(totalAmountOfData / take), // ✅ এখন সঠিক কাজ করবে
     };
     return { data, meta };
-  // } catch (error) {
-    // throw new AppError(
-    //   status.INTERNAL_SERVER_ERROR,
-    //   "Failed to retrieve doctors",
-    //   error instanceof Error ? error.stack : undefined,
-    // );
-  // }
+  
 };

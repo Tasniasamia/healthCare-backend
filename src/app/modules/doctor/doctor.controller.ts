@@ -9,9 +9,7 @@ import { getAllDoctorV1 } from "./doctor.service.v1";
 import { getAllDoctorV2 } from "./doctor.service.v2";
 
 const getAllDoctor=catchAsyncHandler(async(req:Request,res:Response)=>{
-//    const result=await doctorService.getAllDoctor(req?.query as IQueryParams) ;
 const result=await getAllDoctorV2(req?.query as IQueryParams) ;
-// console.log("result",result);
 if(result){
     sendResponse(res, {
     httpStatusCode: status.OK,
