@@ -88,8 +88,7 @@ export const getAllDoctorV2 = async (query: IQueryParams) => {
             [item as string]: Number(searchItem),
           });
         });
-      } 
-      else {
+      } else {
         console.log("coming here to string search");
         stringSearchFields?.forEach((item: string) => {
           if (item.includes(".")) {
@@ -132,60 +131,148 @@ export const getAllDoctorV2 = async (query: IQueryParams) => {
       }
     }
 
-// // Rule-4: Dynamic Filter
-const excludedField = [
-  "searchTerm", "page", "limit", "sortBy", "sortOrder", "fields", "include",
-];
+    // // Rule-4: Dynamic Filter
+    const excludedField = [
+      "searchTerm",
+      "page",
+      "limit",
+      "sortBy",
+      "sortOrder",
+      "fields",
+      "include",
+    ];
 
-const filterCondition: doctorWhereInput[] = [];
+    const filterCondition: doctorWhereInput[] = [];
 
-Object.keys(query).forEach((field) => {
-  if (excludedField.includes(field)) return;
+    Object.keys(query).forEach((field) => {
+      if (excludedField.includes(field)) return;
+      const value = query[field];
+      const parts = field.split(".");
+      if (parts.length === 3) {
+        const [relation, subRelation, actualField] = parts;
+        const bracketMatch = actualField?.match(
+          /^(.+)\[(gt|lt|gte|lte|equals)\]$/,
+        );
+        if (bracketMatch) {
+          const [, actualField2, operator] = bracketMatch;
+          const numericValue = Number(value);
+          filterCondition.push({
+            [relation as string]: {
+              some: {
+                [subRelation as string]: {
+                  [actualField2 as string]: {
+                    [operator as string]: isNaN(numericValue)
+                      ? value
+                      : numericValue,
+                  },
+                },
+              },
+            },
+          });
+        } else if (Array.isArray(value)) {
+          const allNumeric = value.every((v) => !isNaN(Number(v)));
 
-  const value = query[field];
-//bracket match
-  const bracketMatch = field.match(/^(.+)\[(gt|lt|gte|lte|equals)\]$/);
-  if (bracketMatch) {
-    const [, actualField, operator] = bracketMatch;
-    const numericValue = Number(value);
+          filterCondition.push({
+            [relation as string]: {
+              some: {
+                [subRelation as string]: {
+                  [actualField as string]: {
+                    in: allNumeric ? value.map(Number) : value, // number[] বা string[]
+                  },
+                },
+              },
+            },
+          });
+        } else {
+          const numericValue = Number(value);
+          filterCondition.push({
+            [relation as string]: {
+              some: {
+                [subRelation as string]: {
+                  [actualField as string]: isNaN(numericValue)
+                    ? value
+                    : numericValue,
+                },
+              },
+            },
+          });
+        }
+      } else if (parts.length === 2) {
+        const [relation, actualField2] = parts;
+        const bracketMatch = actualField2?.match(
+          /^(.+)\[(gt|lt|gte|lte|equals)\]$/,
+        );
 
-    filterCondition.push({
-      [actualField as string]: {
-        [operator as string]: isNaN(numericValue) ? value : numericValue,
-      },
+        if (bracketMatch) {
+          const [, actualField3, operator] = bracketMatch;
+          const numericValue = Number(value);
+
+          filterCondition.push({
+            [relation as string]: {
+              [actualField3 as string]: {
+                [operator as string]: isNaN(numericValue)
+                  ? value
+                  : numericValue,
+              },
+            },
+          });
+        } else if (Array.isArray(value)) {
+          const allNumeric = value.every((v) => !isNaN(Number(v)));
+
+          filterCondition.push({
+            [relation as string]: {
+              [actualField2 as string]: {
+                in: allNumeric ? value.map(Number) : value,
+              },
+            },
+          });
+        } else {
+          const numericValue = Number(value);
+
+          filterCondition.push({
+            [relation as string]: {
+              [actualField2 as string]: isNaN(numericValue)
+                ? value
+                : numericValue,
+            },
+          });
+        }
+      } else if (!field.includes(".")) {
+        //bracket match
+        const bracketMatch = field.match(/^(.+)\[(gt|lt|gte|lte|equals)\]$/);
+        if (bracketMatch) {
+          const [, actualField, operator] = bracketMatch;
+          const numericValue = Number(value);
+
+          filterCondition.push({
+            [actualField as string]: {
+              [operator as string]: isNaN(numericValue) ? value : numericValue,
+            },
+          });
+        }
+        //array value handle
+        else if (Array.isArray(value)) {
+          const allNumeric = value.every((v) => !isNaN(Number(v)));
+
+          filterCondition.push({
+            [field]: {
+              in: allNumeric ? value.map(Number) : value, // number[] বা string[]
+            },
+          });
+        } else {
+          const numericValue = Number(value);
+          filterCondition.push({
+            [field]: isNaN(numericValue) ? value : numericValue,
+          });
+        }
+      }
     });
-
-  } 
-  //array value handle
-  else if (Array.isArray(value)) {
-    const allNumeric = value.every((v) => !isNaN(Number(v)));
-
-    filterCondition.push({
-      [field]: {
-        in: allNumeric ? value.map(Number) : value, // number[] বা string[]
-      },
-    });
-
-  } 
-  else {
-  
-    const numericValue = Number(value);
-    filterCondition.push({
-      [field]: isNaN(numericValue) ? value : numericValue,
-    });
-  }
-});
-
- 
-
-
 
     const data = await prisma.doctor.findMany({
-
       where: {
-    ...(searchCondition.length > 0 && { OR: searchCondition }),
-    ...(filterCondition.length > 0 && { AND: filterCondition }),
-  },
+        ...(searchCondition.length > 0 && { OR: searchCondition }),
+        ...(filterCondition.length > 0 && { AND: filterCondition }),
+      },
       orderBy,
       skip,
       take,
@@ -195,21 +282,20 @@ Object.keys(query).forEach((field) => {
         doctorSchedules: true,
       },
     });
- const totalAmountOfData = await prisma.doctor.count({
-  where: {
-    ...(searchCondition.length > 0 && { OR: searchCondition }),
-    ...(filterCondition.length > 0 && { AND: filterCondition }),
-  },
-});
+    const totalAmountOfData = await prisma.doctor.count({
+      where: {
+        ...(searchCondition.length > 0 && { OR: searchCondition }),
+        ...(filterCondition.length > 0 && { AND: filterCondition }),
+      },
+    });
 
-const meta = {
-  page: page,
-  limit: take,
-  total: totalAmountOfData,
-  totalPages: Math.ceil(totalAmountOfData / take), // ✅ এখন সঠিক কাজ করবে
-};
-return { data, meta };
-    
+    const meta = {
+      page: page,
+      limit: take,
+      total: totalAmountOfData,
+      totalPages: Math.ceil(totalAmountOfData / take), // ✅ এখন সঠিক কাজ করবে
+    };
+    return { data, meta };
   } catch (error) {
     throw new AppError(
       status.INTERNAL_SERVER_ERROR,
