@@ -25,12 +25,13 @@ export class QueryBuilder {
   filterCondition: Record<string, unknown>[] = [];
   include: Record<string, unknown> = {};
   singleRelations: string[] = [];
-
+booleanFields:string[]=[]
   constructor(
     query: IQueryParams,
     model: keyof typeof prisma,
     numberSearchFields?: string[],
     stringSearchFields?: string[],
+    booleanFields?:string[],
     singleRelations?: string[],
   ) {
     this.query = query;
@@ -44,6 +45,7 @@ export class QueryBuilder {
     this.stringSearchFields = stringSearchFields || [];
     this.searchItem = this.query?.searchTerm || undefined;
     this.singleRelations = singleRelations || [];
+    this.booleanFields = booleanFields || [];
   }
 
   private parseValue(value: unknown): unknown {
@@ -160,50 +162,122 @@ export class QueryBuilder {
   //   }
   // }
 search() {
-  if (this.searchItem) {
-    const numericValue = Number(this.searchItem);
-    if (!isNaN(numericValue)) {
-      // number search — same থাকবে
-    } else {
-      this.stringSearchFields?.forEach((item: string) => {
-        if (item.includes(".")) {
-          const exactFieldofSearch = item.split(".");
+  if (!this.searchItem) return;
 
-          if (exactFieldofSearch.length === 3) {
-            const [relation, subRelation, field] = exactFieldofSearch;
+  const numericValue = Number(this.searchItem);
+  const isBooleanValue = this.searchItem === "true" || this.searchItem === "false";
 
-            const relUsesSome = !this.singleRelations.includes(relation as string);
-            const subUsesSome = !this.singleRelations.includes(subRelation as string);
+  // ─── Number search ───────────────────────────────────────────
+  if (!isNaN(numericValue) && !isBooleanValue) {
+    this.numberSearchFields?.forEach((item: string) => {
+      if (item.includes(".")) {
+        const parts = item.split(".");
 
-            const innerValue = { [field as string]: { contains: this.searchItem as string, mode: "insensitive" } };
-            const subLevel = subUsesSome ? { some: innerValue } : innerValue;
+        if (parts.length === 3) {
+          const [relation, subRelation, field] = parts;
+          const relUsesSome = !this.singleRelations.includes(relation as string);
+          const subUsesSome = !this.singleRelations.includes(subRelation as string);
 
-            this.searchCondition.push({
-              [relation as string]: relUsesSome
-                ? { some: { [subRelation as string]: subLevel } }
-                : { [subRelation as string]: subLevel },
-            });
+          const innerValue = { [field as string]: numericValue };
+          const subLevel = subUsesSome ? { some: innerValue } : innerValue;
 
-          } else if (exactFieldofSearch.length === 2) {
-            const [relation, field] = exactFieldofSearch;
-
-            const relUsesSome = !this.singleRelations.includes(relation as string);
-            const innerValue = { [field as string]: { contains: this.searchItem as string, mode: "insensitive" } };
-
-            this.searchCondition.push({
-              [relation as string]: relUsesSome ? { some: innerValue } : innerValue,
-            });
-          }
-
-        } else {
           this.searchCondition.push({
-            [item as string]: { contains: this.searchItem as string, mode: "insensitive" },
+            [relation as string]: relUsesSome
+              ? { some: { [subRelation as string]: subLevel } }
+              : { [subRelation as string]: subLevel },
+          });
+
+        } else if (parts.length === 2) {
+          const [relation, field] = parts;
+          const relUsesSome = !this.singleRelations.includes(relation as string);
+          const innerValue = { [field as string]: numericValue };
+
+          this.searchCondition.push({
+            [relation as string]: relUsesSome ? { some: innerValue } : innerValue,
           });
         }
-      });
-    }
+      } else {
+        this.searchCondition.push({ [item]: numericValue });
+      }
+    });
+  }
+
+  // ─── Boolean search ──────────────────────────────────────────
+  if (isBooleanValue) {
+    const boolValue = this.searchItem === "true";
+
+    this.booleanFields?.forEach((item: string) => {
+      if (item.includes(".")) {
+        const parts = item.split(".");
+
+        if (parts.length === 3) {
+          const [relation, subRelation, field] = parts;
+          const relUsesSome = !this.singleRelations.includes(relation as string);
+          const subUsesSome = !this.singleRelations.includes(subRelation as string);
+
+          const innerValue = { [field as string]: boolValue };
+          const subLevel = subUsesSome ? { some: innerValue } : innerValue;
+
+          this.searchCondition.push({
+            [relation as string]: relUsesSome
+              ? { some: { [subRelation as string]: subLevel } }
+              : { [subRelation as string]: subLevel },
+          });
+
+        } else if (parts.length === 2) {
+          const [relation, field] = parts;
+          const relUsesSome = !this.singleRelations.includes(relation as string);
+          const innerValue = { [field as string]: boolValue };
+
+          this.searchCondition.push({
+            [relation as string]: relUsesSome ? { some: innerValue } : innerValue,
+          });
+        }
+      } else {
+        this.searchCondition.push({ [item]: boolValue });
+      }
+    });
+  }
+
+  // ─── String search ───────────────────────────────────────────
+  if (isNaN(numericValue) && !isBooleanValue) {
+    this.stringSearchFields?.forEach((item: string) => {
+      if (item.includes(".")) {
+        const parts = item.split(".");
+
+        if (parts.length === 3) {
+          const [relation, subRelation, field] = parts;
+          const relUsesSome = !this.singleRelations.includes(relation as string);
+          const subUsesSome = !this.singleRelations.includes(subRelation as string);
+
+          const innerValue = { [field as string]: { contains: this.searchItem, mode: "insensitive" } };
+          const subLevel = subUsesSome ? { some: innerValue } : innerValue;
+
+          this.searchCondition.push({
+            [relation as string]: relUsesSome
+              ? { some: { [subRelation as string]: subLevel } }
+              : { [subRelation as string]: subLevel },
+          });
+
+        } else if (parts.length === 2) {
+          const [relation, field] = parts;
+          const relUsesSome = !this.singleRelations.includes(relation as string);
+          const innerValue = { [field as string]: { contains: this.searchItem, mode: "insensitive" } };
+
+          this.searchCondition.push({
+            [relation as string]: relUsesSome ? { some: innerValue } : innerValue,
+          });
+        }
+      } else {
+        this.searchCondition.push({
+          [item]: { contains: this.searchItem, mode: "insensitive" },
+        });
+      }
+    });
   }
 }
+
+
   filter() {
     const excludedField = [
       "searchTerm", "page", "limit", "sortBy", "sortOrder", "fields", "include",

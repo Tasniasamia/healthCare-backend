@@ -312,6 +312,7 @@ export const getAllDoctorV2 = async (query: IQueryParams) => {
     "email",
     "id",
     "name",
+    
   ];
   const numberSearchFields = ["appointmentFee", "avaerageRating", "experience"];
 
@@ -320,6 +321,7 @@ export const getAllDoctorV2 = async (query: IQueryParams) => {
     "doctor",
     numberSearchFields,
     stringSearchFields,
+    ['isDeleted'],
     ['user',"specialty"] // ✅ one-to-one গুলো দাও, appointments নেই তাই some পাবে
   );
 
