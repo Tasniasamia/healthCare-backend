@@ -81,11 +81,11 @@ const getDoctorSchedule = async (query: IQueryParams) => {
   const stringSearchFields = [
     "scheduleId",
     "doctorId",
-    "isBooked",
-    "schedule.startDateTime",
-    "schedule.endDateTime",
-    "schedule.appointments.status",
-    "schedule.appointments.paymentStatus",
+    // "isBooked",
+    // "schedule.startDateTime",
+    // "schedule.endDateTime",
+    // "schedule.appointments.status",
+    // "schedule.appointments.paymentStatus",
   ];
 
 // doctorSchedule service
@@ -93,7 +93,7 @@ const builder = new QueryBuilder(
   query,
   "doctorSchedules",
   [],
-  [],
+  stringSearchFields,
   ["schedule", "doctor"] // ✅ one-to-one গুলো দাও, appointments নেই তাই some পাবে
 );
 
