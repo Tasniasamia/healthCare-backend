@@ -7,7 +7,7 @@ interface stripePayload {
 }
 
 export const createCheckoutSession = async (payload: stripePayload) => {
-  const session = await stripe.checkout.sessions.create({
+  const session:any = await stripe.checkout.sessions.create({
     mode: "payment",
 
     payment_method_types: ["card"],
@@ -30,9 +30,9 @@ export const createCheckoutSession = async (payload: stripePayload) => {
       paymentId: payload?.paymentId,
     },
     success_url:
-      "http://localhost:3000/success?session_id={CHECKOUT_SESSION_ID}",
+      `http://localhost:3000/payment/success`,
 
-    cancel_url: "http://localhost:3000/cancel",
+    cancel_url: "http://localhost:3000/payment/cancel",
   });
 
   return session;

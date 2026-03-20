@@ -15,83 +15,187 @@ import type { IQueryParams } from "../../interfaces/query.interface";
 import { appointmentConfig, doctorConfig, doctorDefaultConfig, doctorFilterableFields, doctorSearchableFields, patientConfig, patientDefaultConfig, patientFilterableFields, patientSearchableFields } from "./appointment.constants";
 import { createCheckoutSession } from "../../utils/stripe";
 
+// const bookAppointment = async (
+//   user: JwtPayload,
+//   payload: ICreateBookAppointment
+// ) => {
+//   const patient = await prisma.patient.findUniqueOrThrow({
+//     where: { email: user?.email ,isDeleted:false},
+//     include:{user:true}
+//   });
+
+//   const doctor = await prisma.doctor.findUniqueOrThrow({
+//     where: { id: payload?.doctorId,isDeleted:false },
+//   });
+
+//   const schedule = await prisma.schedule.findFirstOrThrow({
+//     where: { id: payload?.schduleId },
+//   });
+
+// const isExistAppointment=await prisma.appointment.findFirst({
+//   where:{scheduleId:payload?.schduleId,doctorId:payload?.doctorId}
+// })
+
+// if(isExistAppointment){
+//   throw new AppError(status.BAD_REQUEST,'Already booked the Appointment')
+// }
+
+
+//   const videoCallingId = randomUUID();
+
+//   // const result = await prisma.$transaction(async (tx) => {
+//     const createAppointment = await prisma.appointment.create({
+//       data: {
+//         patientId: patient?.id,
+//         doctorId: doctor.id,
+//         scheduleId: schedule.id,
+//         videoCallingId: videoCallingId,
+//       },
+//     });
+//     if (createAppointment) {
+//        await prisma.doctorSchedules.update({
+//         where: {
+//           doctorId_scheduleId: {
+//             doctorId: doctor?.id,
+//             scheduleId: schedule?.id,
+//           },
+//         },
+//         data: { isBooked: true },
+//       });
+
+//       const transactionId =  randomUUID();
+
+//       const createPayment = await prisma.payment.create({
+//           data : {
+//               appointmentId : createAppointment?.id,
+//               amount : doctor.appointmentFee,
+//               transactionId
+//           }
+//       });
+   
+//       const sessionPayload={
+//         appointmentId: createAppointment?.id,
+//         paymentId: createPayment?.id,
+//         customerName: patient?.user?.name,
+//         price: Number(doctor?.appointmentFee)
+//       }
+//      const session=await createCheckoutSession(sessionPayload);
+//      return {
+//       appointment:{...createAppointment},
+//       paymentdata:{...createPayment},
+//       paymentUrl : session?.url,
+
+//      }
+//     }
+//     return null;
+//   // });
+
+//   // return result;
+// };
+
 const bookAppointment = async (
   user: JwtPayload,
   payload: ICreateBookAppointment
 ) => {
   const patient = await prisma.patient.findUniqueOrThrow({
-    where: { email: user?.email ,isDeleted:false},
-    include:{user:true}
+    where: { email: user?.email, isDeleted: false },
+    include: { user: true }
   });
 
   const doctor = await prisma.doctor.findUniqueOrThrow({
-    where: { id: payload?.doctorId,isDeleted:false },
+    where: { id: payload?.doctorId, isDeleted: false },
   });
 
   const schedule = await prisma.schedule.findFirstOrThrow({
     where: { id: payload?.schduleId },
   });
 
-const isExistAppointment=await prisma.appointment.findFirst({
-  where:{scheduleId:payload?.schduleId,doctorId:payload?.doctorId}
-})
+  const isExistAppointment = await prisma.appointment.findFirst({
+    where: { scheduleId: payload?.schduleId, doctorId: payload?.doctorId }
+  });
 
-if(isExistAppointment){
-  throw new AppError(status.BAD_REQUEST,'Already booked the Appointment')
-}
+  if (isExistAppointment) {
+    throw new AppError(status.BAD_REQUEST, 'Already booked the Appointment');
+  }
 
+  // ✅ doctorSchedules e ace kina check koro
+  const doctorSchedule = await prisma.doctorSchedules.findUnique({
+    where: {
+      doctorId_scheduleId: {
+        doctorId: doctor.id,
+        scheduleId: schedule.id,
+      }
+    }
+  });
+
+  // ✅ na thakle create kore nao
+  if (!doctorSchedule) {
+    await prisma.doctorSchedules.create({
+      data: {
+        doctorId: doctor.id,
+        scheduleId: schedule.id,
+        isBooked: false,
+      }
+    });
+  }
+
+  // ✅ already booked kina check koro
+  if (doctorSchedule?.isBooked) {
+    throw new AppError(status.BAD_REQUEST, 'This schedule is already booked');
+  }
 
   const videoCallingId = randomUUID();
 
-  // const result = await prisma.$transaction(async (tx) => {
-    const createAppointment = await prisma.appointment.create({
-      data: {
-        patientId: patient?.id,
-        doctorId: doctor.id,
-        scheduleId: schedule.id,
-        videoCallingId: videoCallingId,
-      },
-    });
-    if (createAppointment) {
-       await prisma.doctorSchedules.update({
-        where: {
-          doctorId_scheduleId: {
-            doctorId: doctor?.id,
-            scheduleId: schedule?.id,
-          },
+  const createAppointment = await prisma.appointment.create({
+    data: {
+      patientId: patient?.id,
+      doctorId: doctor.id,
+      scheduleId: schedule.id,
+      videoCallingId: videoCallingId,
+    },
+  });
+
+  if (createAppointment) {
+    // ✅ এখন update কাজ করবে
+    await prisma.doctorSchedules.update({
+      where: {
+        doctorId_scheduleId: {
+          doctorId: doctor?.id,
+          scheduleId: schedule?.id,
         },
-        data: { isBooked: true },
-      });
+      },
+      data: { isBooked: true },
+    });
 
-      const transactionId =  randomUUID();
+    const transactionId = randomUUID();
 
-      const createPayment = await prisma.payment.create({
-          data : {
-              appointmentId : createAppointment?.id,
-              amount : doctor.appointmentFee,
-              transactionId
-          }
-      });
-   
-      const sessionPayload={
+    const createPayment = await prisma.payment.create({
+      data: {
         appointmentId: createAppointment?.id,
-        paymentId: createPayment?.id,
-        customerName: patient?.user?.name,
-        price: Number(doctor?.appointmentFee)
+        amount: doctor.appointmentFee,
+        transactionId
       }
-     const session=await createCheckoutSession(sessionPayload);
-     return {
-      appointment:{...createAppointment},
-      paymentdata:{...createPayment},
-      paymentUrl : session?.url,
+    });
 
-     }
-    }
-    return null;
-  // });
+    const sessionPayload = {
+      appointmentId: createAppointment?.id,
+      paymentId: createPayment?.id,
+      customerName: patient?.user?.name,
+      price: Number(doctor?.appointmentFee)
+    };
 
-  // return result;
+    const session = await createCheckoutSession(sessionPayload);
+
+    return {
+      appointment: { ...createAppointment },
+      paymentdata: { ...createPayment },
+      paymentUrl: session?.url,
+    };
+  }
+
+  return null;
 };
+
 
 const bookAppointmentWithPayLater = async (
   user: JwtPayload,

@@ -17,8 +17,7 @@ const CreateDoctorSchema = z.object({
 
     address: z
       .string("Address is required")
-      .min(10, "Address must be at least 10 characters")
-      .max(100, "Address must be at most 100 characters")
+ 
       .optional(),
 
     registrationNumber: z.string("Registration number is required"),

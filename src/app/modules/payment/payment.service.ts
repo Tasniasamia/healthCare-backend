@@ -72,6 +72,10 @@ const handleStripeWebhookEvent = async (req: Request, res: Response) => {
             appointment:{include:{patient:{include:{user:true,patientHealthData:true}},doctor:{include:{specialities:true,}}}}
           }
         });
+
+    console.log("session.payment_status",session.payment_status);
+    console.log("paymentData", paymentData);
+
         const imageBuffer = await generatePaymentConfirmationImage({
           // Patient
           patientName: paymentData?.appointment.patient?.user?.name as string,

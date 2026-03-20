@@ -8,5 +8,5 @@ import { SpecialtySchema } from "./speciality.validation";
 
 const route=Router();
 route.post('/',multerUpload.single("file"),validationRequest(SpecialtySchema.createSpecialtyZodSchema),specialityController.createSpeciality);
-
+route.get('/',specialityController.getAllSpeciality)
 export const specialityRoute=route;

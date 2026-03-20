@@ -13,77 +13,144 @@ import { scheduleFilterableFields, scheduleSearchableFields } from "./schedule.c
 import { AppError } from "../../errorHelplers/appError";
 import status from "http-status";
 
+// const createSchedule = async (payload: ICreateSchedulePayload) => {
+//   const { startDate, endDate, startTime, endTime } = await payload;
+
+
+//   const today = new Date().toISOString().split("T")[0];
+
+//   if ((startDate < (today as any)) || (endDate < (today as any))) {
+//     throw new Error("Previous Date is not accepted");
+//   }
+
+
+//   const currentDate = new Date(startDate);
+//   const lastDate = new Date(endDate);
+//   const interval = 30;
+//   const schedules = [];
+//   let result;
+//   while (currentDate <= lastDate) {
+//     const startDateTimeFormat = new Date(
+//       addMinutes(
+//         addHours(
+//           `${format(new Date(currentDate), "yyyy-MM-dd")}`,
+//           Number(startTime.split(":")[0])
+//         ),
+//         Number(startTime.split(":")[1])
+//       )
+//     );
+//     const endDateTimeFormat = new Date(
+//       addMinutes(
+//         addHours(
+//           `${format(new Date(currentDate), "yyyy-MM-dd")}`,
+//           Number(endTime.split(":")[0])
+//         ),
+//         Number(endTime.split(":")[1])
+//       )
+//     );
+//     while (startDateTimeFormat < endDateTimeFormat) {
+//       const startTime1 = await convertDateTime(new Date(startDateTimeFormat));
+//       const endTime1 = await convertDateTime(
+//         addMinutes(new Date(startDateTimeFormat), interval)
+//       );
+
+//       const existSchedule = await prisma.schedule.findFirst({
+//         where: {
+//           startDateTime: startTime1,
+//           endDateTime: endTime1,
+//         },
+//       });
+
+//       if (existSchedule) {
+//          throw new AppError(status.BAD_REQUEST,'Already created the schedule');
+//       }
+//       result = await prisma.schedule.create({
+//         data: {
+//           startDateTime: startTime1,
+//           endDateTime: endTime1,
+//         },
+//       });
+//       schedules.push(result);
+//       startDateTimeFormat.setMinutes(
+//         startDateTimeFormat.getMinutes() + interval
+//       );
+//     }
+
+//     currentDate.setDate(currentDate.getDate() + 1);
+//   }
+
+//   if (schedules.length > 0 ) {
+//     return { result, schedules };
+//   }
+// };
 const createSchedule = async (payload: ICreateSchedulePayload) => {
-  const { startDate, endDate, startTime, endTime } = await payload;
+  const { startDate, endDate, startTime, endTime } = payload;
 
-
-  const today = new Date().toISOString().split("T")[0];
-
-  if ((startDate < (today as any)) || (endDate < (today as any))) {
+  const today:any = new Date().toISOString().split("T")[0];
+  if (startDate < today || endDate < today) {
     throw new Error("Previous Date is not accepted");
   }
-
 
   const currentDate = new Date(startDate);
   const lastDate = new Date(endDate);
   const interval = 30;
-  const schedules = [];
-  let result;
+
+  // ✅ Step 1 — loop এ শুধু slots বানাও, DB call নেই
+  const allSlots: { startDateTime: Date; endDateTime: Date }[] = [];
+
   while (currentDate <= lastDate) {
-    const startDateTimeFormat = new Date(
+    const startDT = new Date(
       addMinutes(
-        addHours(
-          `${format(new Date(currentDate), "yyyy-MM-dd")}`,
-          Number(startTime.split(":")[0])
-        ),
+        addHours(`${format(currentDate, "yyyy-MM-dd")}`, Number(startTime.split(":")[0])),
         Number(startTime.split(":")[1])
       )
     );
-    const endDateTimeFormat = new Date(
+    const endDT = new Date(
       addMinutes(
-        addHours(
-          `${format(new Date(currentDate), "yyyy-MM-dd")}`,
-          Number(endTime.split(":")[0])
-        ),
+        addHours(`${format(currentDate, "yyyy-MM-dd")}`, Number(endTime.split(":")[0])),
         Number(endTime.split(":")[1])
       )
     );
-    while (startDateTimeFormat < endDateTimeFormat) {
-      const startTime1 = await convertDateTime(new Date(startDateTimeFormat));
-      const endTime1 = await convertDateTime(
-        addMinutes(new Date(startDateTimeFormat), interval)
-      );
 
-      const existSchedule = await prisma.schedule.findFirst({
-        where: {
-          startDateTime: startTime1,
-          endDateTime: endTime1,
-        },
-      });
-
-      if (existSchedule) {
-         throw new AppError(status.BAD_REQUEST,'Already created the schedule');
-      }
-      result = await prisma.schedule.create({
-        data: {
-          startDateTime: startTime1,
-          endDateTime: endTime1,
-        },
-      });
-      schedules.push(result);
-      startDateTimeFormat.setMinutes(
-        startDateTimeFormat.getMinutes() + interval
-      );
+    while (startDT < endDT) {
+      const startTime1 = await convertDateTime(new Date(startDT));
+      const endTime1 = await convertDateTime(addMinutes(new Date(startDT), interval));
+      allSlots.push({ startDateTime: startTime1, endDateTime: endTime1 });
+      startDT.setMinutes(startDT.getMinutes() + interval);
     }
 
     currentDate.setDate(currentDate.getDate() + 1);
   }
 
-  if (schedules.length > 0 ) {
-    return { result, schedules };
-  }
-};
+  // ✅ Step 2 — একবারে existing check করো
+  const existing = await prisma.schedule.findMany({
+    where: {
+      startDateTime: { in: allSlots.map((s) => s.startDateTime) },
+    },
+    select: { startDateTime: true },
+  });
+  const existingSet = new Set(existing.map((e) => e.startDateTime.toISOString()));
 
+  // ✅ Step 3 — নতুন slots filter করো
+  const newSlots = allSlots.filter(
+    (s) => !existingSet.has(new Date(s.startDateTime).toISOString())
+  );
+
+  if (newSlots.length === 0) {
+    throw new AppError(status.BAD_REQUEST, "All schedules already exist");
+  }
+
+  // ✅ Step 4 — একবারে bulk create
+  await prisma.schedule.createMany({
+    data: newSlots,
+    skipDuplicates: true,
+  });
+
+  return {
+    created: newSlots.length,
+    skipped: allSlots.length - newSlots.length,
+  };
+};
 const getSchedule = async (query:IQueryParams) => {
   const queries = new QueryBuilder<
     Schedule,
@@ -152,6 +219,7 @@ await prisma.schedule.delete({
       id: id
   }
 });
+// await prisma.schedule.deleteMany({})
 return true;
 }
 

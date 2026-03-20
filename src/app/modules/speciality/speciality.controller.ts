@@ -17,5 +17,18 @@ import { sendResponse } from "../../shared/sendResponse";
   }
  }))
 
+ const getAllSpeciality= (catchAsyncHandler(async(req:Request,res:Response,next:NextFunction)=>{
+  const response=await specialityService.getAllSpeciality();
+  if(response){
+  return await sendResponse(res,{
+    success:true,
+    message:'Speciality get Successfully',
+    data:response,
+    httpStatusCode:200
+    });
+  }
+ }))
 
- export const specialityController={createSpeciality}
+
+
+ export const specialityController={getAllSpeciality,createSpeciality}
